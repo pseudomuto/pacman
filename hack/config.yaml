@@ -1,0 +1,6 @@
+addr: :8080
+metricsAddr: :9090
+
+go:
+  noSumPatterns:
+    - gitlab.com/pseudomuto/*

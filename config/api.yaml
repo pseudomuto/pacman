@@ -1,0 +1,23 @@
+openapi: 3.0.0
+info:
+  version: 0.1.0
+  title: PacMan API
+paths:
+  /healthz:
+    get:
+      responses:
+        "200":
+          description: Health check response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthCheckResponse"
+components:
+  schemas:
+    HealthCheckResponse:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          example: OK
