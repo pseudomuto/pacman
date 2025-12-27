@@ -35,21 +35,21 @@ func (s *FileSys) Read(ctx context.Context, w io.Writer, uri string) error {
 	return nil
 }
 
-func (s *FileSys) Write(ctx context.Context, r io.Reader, uri string) error {
+func (s *FileSys) Write(ctx context.Context, r io.Reader, uri string) (string, error) {
 	if err := os.MkdirAll(filepath.Dir(uri), os.FileMode(0o777)); err != nil {
-		return fmt.Errorf("failed to create parent dir for: %s, %w", uri, err)
+		return "", fmt.Errorf("failed to create parent dir for: %s, %w", uri, err)
 	}
 
 	f, err := os.Create(uri)
 	if err != nil {
-		return fmt.Errorf("failed to create file: %s, %w", uri, err)
+		return "", fmt.Errorf("failed to create file: %s, %w", uri, err)
 	}
 	defer func() { _ = f.Close() }()
 
 	_, err = io.Copy(f, r)
 	if err != nil {
-		return fmt.Errorf("failed to write content: %w", err)
+		return "", fmt.Errorf("failed to write content: %w", err)
 	}
 
-	return nil
+	return uri, nil
 }

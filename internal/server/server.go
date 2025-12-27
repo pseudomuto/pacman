@@ -91,15 +91,6 @@ func New(p *ServerParams) *Server {
 		pr.RegisterRoutes(engine)
 	}
 
-	for _, route := range engine.Routes() {
-		p.Logger.Info(
-			"route",
-			"path", route.Path,
-			"method", route.Method,
-			"handler", route.Handler,
-		)
-	}
-
 	svr := &Server{
 		log:     p.Logger.With("module", "server"),
 		cfg:     p.Config,

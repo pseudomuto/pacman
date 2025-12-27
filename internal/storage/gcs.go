@@ -4,17 +4,24 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"net/url"
+	"path"
+	"strings"
 
 	"github.com/pseudomuto/pacman/internal/types"
 	"gocloud.dev/blob"
 	_ "gocloud.dev/blob/gcsblob"
 )
 
-type GCS struct{}
+type GCS struct {
+	bucket string
+}
 
-func NewGCS() *GCS {
-	return new(GCS)
+func NewGCS(bucket string) *GCS {
+	if !strings.HasPrefix(bucket, "gs://") {
+		bucket = "gs://" + bucket
+	}
+
+	return &GCS{bucket: bucket}
 }
 
 func (s *GCS) Type() types.StorageType {
@@ -22,20 +29,15 @@ func (s *GCS) Type() types.StorageType {
 }
 
 func (s *GCS) Read(ctx context.Context, w io.Writer, uri string) error {
-	url, err := url.Parse(uri)
+	bucket, err := blob.OpenBucket(ctx, s.bucket)
 	if err != nil {
-		return fmt.Errorf("failed to parse URI: %s, %w", uri, err)
-	}
-
-	bucket, err := blob.OpenBucket(ctx, fmt.Sprintf("%s://%s", url.Scheme, url.Host))
-	if err != nil {
-		return fmt.Errorf("failed to open bucket: %s, %w", url, err)
+		return fmt.Errorf("failed to open bucket: %s, %w", s.bucket, err)
 	}
 	defer closerDefer(bucket)
 
-	r, err := bucket.NewReader(ctx, url.Path, nil)
+	r, err := bucket.NewReader(ctx, uri, nil)
 	if err != nil {
-		return fmt.Errorf("failed to read: %s, %w", url.Path, err)
+		return fmt.Errorf("failed to read: %s, %w", uri, err)
 	}
 	defer closerDefer(r)
 
@@ -47,30 +49,25 @@ func (s *GCS) Read(ctx context.Context, w io.Writer, uri string) error {
 	return nil
 }
 
-func (s *GCS) Write(ctx context.Context, r io.Reader, uri string) error {
-	url, err := url.Parse(uri)
+func (s *GCS) Write(ctx context.Context, r io.Reader, uri string) (string, error) {
+	bucket, err := blob.OpenBucket(ctx, s.bucket)
 	if err != nil {
-		return fmt.Errorf("failed to parse URI: %s, %w", uri, err)
-	}
-
-	bucket, err := blob.OpenBucket(ctx, fmt.Sprintf("%s://%s", url.Scheme, url.Host))
-	if err != nil {
-		return fmt.Errorf("failed to open bucket: %s, %w", url, err)
+		return "", fmt.Errorf("failed to open bucket: %s, %w", s.bucket, err)
 	}
 	defer closerDefer(bucket)
 
-	w, err := bucket.NewWriter(ctx, url.Path, nil)
+	w, err := bucket.NewWriter(ctx, uri, nil)
 	if err != nil {
-		return fmt.Errorf("failed to open: %s, %w", url.Path, err)
+		return "", fmt.Errorf("failed to open: %s, %w", uri, err)
 	}
 	defer closerDefer(w)
 
 	_, err = io.Copy(w, r)
 	if err != nil {
-		return fmt.Errorf("failed to write blob content: %w", err)
+		return "", fmt.Errorf("failed to write blob content: %w", err)
 	}
 
-	return nil
+	return path.Join(s.bucket, uri), nil
 }
 
 func closerDefer(c io.Closer) {

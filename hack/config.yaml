@@ -1,6 +1,10 @@
 addr: :8080
 metricsAddr: :9090
 
+db:
+  dialect: sqlite
+  dsn: file:ent?mode=memory&_fk=1
+
 go:
   noSumPatterns:
     - gitlab.com/pseudomuto/*
