@@ -15,10 +15,16 @@ type (
 
 	// Config holds the configuration for the clickhouse-api service.
 	Config struct {
-		Addr        string `yaml:"addr"`
-		MetricsAddr string `yaml:"metricsAddr"`
-		Debug       bool   `yaml:"debug"`
-		Go          Go     `yaml:"go"`
+		Addr        string   `yaml:"addr"`
+		MetricsAddr string   `yaml:"metricsAddr"`
+		Debug       bool     `yaml:"debug"`
+		DB          Database `yaml:"db"`
+		Go          Go       `yaml:"go"`
+	}
+
+	Database struct {
+		Dialect string `yaml:"dialect"`
+		DSN     string `yaml:"dsn"`
 	}
 
 	Go struct {
@@ -32,6 +38,11 @@ func Load(r io.Reader, exp EnvExpander) (*Config, error) {
 	if err := yaml.NewDecoder(r).Decode(&c); err != nil {
 		return nil, fmt.Errorf("failed to read config: %w", err)
 	}
+
+	c.Addr = exp(c.Addr)
+	c.MetricsAddr = exp(c.MetricsAddr)
+	c.DB.Dialect = exp(c.DB.Dialect)
+	c.DB.DSN = exp(c.DB.DSN)
 
 	return &c, nil
 }

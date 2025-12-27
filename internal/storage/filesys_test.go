@@ -15,9 +15,10 @@ func TestFileSys(t *testing.T) {
 	s := NewFileSys()
 
 	file := filepath.Join(dir, "test", "sub", "file.txt")
-	require.NoError(t, s.Write(t.Context(), strings.NewReader("yo"), file))
+	path, err := s.Write(t.Context(), strings.NewReader("yo"), file)
+	require.NoError(t, err)
 
 	var buf bytes.Buffer
-	require.NoError(t, s.Read(t.Context(), &buf, file))
+	require.NoError(t, s.Read(t.Context(), &buf, path))
 	require.Equal(t, "yo", buf.String())
 }

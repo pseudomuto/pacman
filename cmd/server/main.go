@@ -8,6 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/pseudomuto/pacman/internal/config"
+	"github.com/pseudomuto/pacman/internal/data"
 	"github.com/pseudomuto/pacman/internal/packager"
 	"github.com/pseudomuto/pacman/internal/proxy"
 	"github.com/pseudomuto/pacman/internal/publisher"
@@ -44,6 +45,7 @@ func main() {
 					serverConfig,
 				),
 				config.Module,
+				data.Module,
 				packager.Module,
 				proxy.Module,
 				publisher.Module,

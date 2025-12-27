@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/pseudomuto/pacman/internal/archive"
+	"github.com/pseudomuto/pacman/internal/ent"
 	"github.com/pseudomuto/pacman/internal/fsutil"
 	"github.com/pseudomuto/pacman/internal/types"
 	"go.uber.org/fx"
@@ -16,26 +17,33 @@ type (
 	PublisherParams struct {
 		fx.In
 
-		Packagers   []Packager   `group:"publisher_packagers"`
+		Packagers   []Packager `group:"publisher_packagers"`
+		Persister   Persister
 		Uploaders   []Uploader   `group:"publisher_uploaders"`
 		VCSFetchers []VCSFetcher `group:"publisher_vcs_fetchers"`
 	}
 
 	Publisher struct {
 		archivers []Packager
+		persister Persister
 		uploaders []Uploader
 		vcs       []VCSFetcher
 	}
 
 	PublishOptions struct {
-		Type    types.ArchiveType
-		Storage types.StorageType
-		VCS     types.VCSType
-		Repo    string
-		Ref     string
-		Subdir  string
-		Package string
-		Version string
+		Type        types.ArchiveType
+		Storage     types.StorageType
+		VCS         types.VCSType
+		Repo        string
+		Ref         string
+		Subdir      string
+		Package     string
+		Description string
+		Version     string
+	}
+
+	Persister interface {
+		CreateArtifact(context.Context, *ent.Artifact) (*ent.Artifact, error)
 	}
 
 	Packager interface {
@@ -45,7 +53,7 @@ type (
 
 	Uploader interface {
 		Type() types.StorageType
-		Write(context.Context, io.Reader, string) error
+		Write(context.Context, io.Reader, string) (string, error)
 	}
 
 	VCSFetcher interface {
@@ -57,6 +65,7 @@ type (
 func New(p PublisherParams) *Publisher {
 	return &Publisher{
 		archivers: p.Packagers,
+		persister: p.Persister,
 		uploaders: p.Uploaders,
 		vcs:       p.VCSFetchers,
 	}
@@ -107,6 +116,10 @@ func (p *Publisher) Publish(ctx context.Context, opts PublishOptions) error {
 					return fmt.Errorf("failed creating %s package: %w", packer.Type().String(), err)
 				}
 
+				if _, err := pkg.Seek(0, 0); err != nil {
+					return fmt.Errorf("failed to seek to beginning of package: %w", err)
+				}
+
 				// Upload package
 				path := fmt.Sprintf(
 					"%s/%s@%s.zip",
@@ -115,11 +128,26 @@ func (p *Publisher) Publish(ctx context.Context, opts PublishOptions) error {
 					opts.Version,
 				)
 
-				if err := uploader.Write(ctx, nil, path); err != nil {
+				uri, err := uploader.Write(ctx, pkg, path)
+				if err != nil {
 					return fmt.Errorf("failed to upload package: %w", err)
 				}
 
-				// TODO: Publish package
+				if _, err := p.persister.CreateArtifact(ctx, &ent.Artifact{
+					Name:        opts.Package,
+					Description: opts.Description,
+					Type:        opts.Type,
+					Edges: ent.ArtifactEdges{
+						Versions: []*ent.ArtifactVersion{
+							{
+								Version: opts.Version,
+								URI:     uri,
+							},
+						},
+					},
+				}); err != nil {
+					return fmt.Errorf("failed to persist artifact: %w", err)
+				}
 
 				return nil
 			}); err != nil {

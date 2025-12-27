@@ -1,12 +1,13 @@
 package publisher_test
 
-//go:generate go tool mockgen -destination=mocks_test.go -package=publisher_test . Packager,Uploader,VCSFetcher
+//go:generate go tool mockgen -destination=mocks_test.go -package=publisher_test . Packager,Persister,Uploader,VCSFetcher
 
 import (
 	"io"
 	"testing"
 
 	"github.com/pseudomuto/pacman/internal/archive"
+	"github.com/pseudomuto/pacman/internal/ent"
 	"github.com/pseudomuto/pacman/internal/packager"
 	. "github.com/pseudomuto/pacman/internal/publisher"
 	"github.com/pseudomuto/pacman/internal/types"
@@ -21,24 +22,27 @@ func TestPublisher_Publish(t *testing.T) {
 	defer ctrl.Finish()
 
 	fetcher := NewMockVCSFetcher(ctrl)
+	persister := NewMockPersister(ctrl)
 	uploader := NewMockUploader(ctrl)
 
 	t.Run("go module", func(t *testing.T) {
 		publisher := New(PublisherParams{
 			Packagers:   []Packager{packager.NewGoModule()},
+			Persister:   persister,
 			Uploaders:   []Uploader{uploader},
 			VCSFetchers: []VCSFetcher{fetcher},
 		})
 
 		pubOpts := PublishOptions{
-			Type:    types.GoModule,
-			Storage: types.GCS,
-			VCS:     types.GitHub,
-			Repo:    "test/repo",
-			Ref:     "abcdef12345",
-			Subdir:  "sub/dir/project",
-			Package: "github.com/pseudomuto/test",
-			Version: "v1.2.3",
+			Type:        types.GoModule,
+			Storage:     types.GCS,
+			VCS:         types.GitHub,
+			Repo:        "test/repo",
+			Ref:         "abcdef12345",
+			Subdir:      "sub/dir/project",
+			Package:     "github.com/pseudomuto/test",
+			Description: "My gomod package",
+			Version:     "v1.2.3",
 		}
 
 		fetcher.EXPECT().Type().Return(pubOpts.VCS)
@@ -66,11 +70,25 @@ func TestPublisher_Publish(t *testing.T) {
 				)
 			})
 
+		persister.EXPECT().CreateArtifact(gomock.Any(), &ent.Artifact{
+			Name:        pubOpts.Package,
+			Description: pubOpts.Description,
+			Type:        pubOpts.Type,
+			Edges: ent.ArtifactEdges{
+				Versions: []*ent.ArtifactVersion{
+					{
+						Version: pubOpts.Version,
+						URI:     "gs://test-bucket/gomod/github.com/pseudomuto/test@v1.2.3.zip",
+					},
+				},
+			},
+		})
+
 		uploader.EXPECT().Write(
 			gomock.Any(),
 			gomock.Any(),
 			"gomod/github.com/pseudomuto/test@v1.2.3.zip",
-		).Return(nil)
+		).Return("gs://test-bucket/gomod/github.com/pseudomuto/test@v1.2.3.zip", nil)
 
 		require.NoError(t, publisher.Publish(t.Context(), pubOpts))
 	})

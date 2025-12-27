@@ -7,6 +7,7 @@ tasks:
     silent: true
     cmds:
       - go mod tidy
+      - task ent:gen
 
   server:
     desc: Run the API server
@@ -36,8 +37,18 @@ tasks:
 
   test:ci:
     desc: Run the test suite for CI with coverage profile
+    deps: [update]
     silent: true
     cmd: go test -v -coverprofile=coverage.out ./...
+
+  ent:gen:
+    desc: Generate ent code
+    cmds:
+      - go tool ent generate ./internal/ent/schema
+
+  ent:sql:
+    desc: Show the generated SQL for all entities
+    cmd: go tool ent schema ./internal/ent/schema --dialect postgres --version 17
 
   tag:
     desc: Create and push a new signed tag for release

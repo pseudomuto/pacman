@@ -44,8 +44,6 @@
               buildUtils
             ];
 
-            CGO_ENABLED = "0";
-
             # Helpful prompt when you enter the shell
             shellHook = ''
               echo "▶ Dev shell ready on ${system}"

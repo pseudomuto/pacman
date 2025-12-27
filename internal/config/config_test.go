@@ -12,18 +12,28 @@ import (
 )
 
 func TestLoad(t *testing.T) {
+	env := func(s string) string {
+		if s == "$DATABASE_URL" {
+			return "sqlite://open_string"
+		}
+
+		return s
+	}
+
 	r := strings.NewReader(`
 addr: ":8080"
 metricsAddr: ":9200"
+db:
+  dialect: sqlite
+  dsn: $DATABASE_URL
 debug: true`)
 
-	cfg, err := Load(r, func(s string) string {
-		return os.Expand(s, func(key string) string { return key })
-	})
+	cfg, err := Load(r, env)
 	require.NoError(t, err)
 
 	require.Equal(t, ":8080", cfg.Addr)
 	require.Equal(t, ":9200", cfg.MetricsAddr)
+	require.Equal(t, "sqlite://open_string", cfg.DB.DSN)
 	require.True(t, cfg.Debug)
 }
 
