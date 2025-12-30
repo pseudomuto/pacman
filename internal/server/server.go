@@ -10,6 +10,9 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/pseudomuto/pacman/internal/api"
+	"github.com/pseudomuto/pacman/internal/ent"
+	"github.com/pseudomuto/pacman/internal/sumdb"
+	"github.com/pseudomuto/pacman/internal/types"
 	"go.uber.org/fx"
 )
 
@@ -26,10 +29,12 @@ type (
 		fx.In
 
 		Config       *ServerConfig
+		Database     *ent.Client
 		Lifecycle    fx.Lifecycle
 		Logger       *slog.Logger `optional:"true"`
 		PromRegistry *prometheus.Registry
-		Proxies      []Proxy `group:"proxies"`
+		Routers      []types.Router `group:"server_routers"`
+		SumDBs       []*sumdb.SumDB
 	}
 
 	// ServerConfig provides configuration options for the server.
@@ -67,12 +72,9 @@ type (
 	Server struct {
 		svr     *http.Server
 		cfg     *ServerConfig
+		db      *ent.Client
 		log     *slog.Logger
 		promReg *prometheus.Registry
-	}
-
-	Proxy interface {
-		RegisterRoutes(*gin.Engine)
 	}
 )
 
@@ -87,13 +89,14 @@ func New(p *ServerParams) *Server {
 	engine.Use(createRecoveryMiddleware(p.Logger))
 	engine.Use(createMetricsMiddleware(p.PromRegistry, p.Config.MetricsLabels))
 
-	for _, pr := range p.Proxies {
+	for _, pr := range p.Routers {
 		pr.RegisterRoutes(engine)
 	}
 
 	svr := &Server{
 		log:     p.Logger.With("module", "server"),
 		cfg:     p.Config,
+		db:      p.Database,
 		promReg: p.PromRegistry,
 		svr: &http.Server{
 			Addr:         p.Config.ListenAddr,

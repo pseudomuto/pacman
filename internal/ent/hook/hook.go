@@ -33,6 +33,42 @@ func (f ArtifactVersionFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Va
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ArtifactVersionMutation", m)
 }
 
+// The SumDBHashFunc type is an adapter to allow the use of ordinary
+// function as SumDBHash mutator.
+type SumDBHashFunc func(context.Context, *ent.SumDBHashMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f SumDBHashFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.SumDBHashMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.SumDBHashMutation", m)
+}
+
+// The SumDBRecordFunc type is an adapter to allow the use of ordinary
+// function as SumDBRecord mutator.
+type SumDBRecordFunc func(context.Context, *ent.SumDBRecordMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f SumDBRecordFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.SumDBRecordMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.SumDBRecordMutation", m)
+}
+
+// The SumDBTreeFunc type is an adapter to allow the use of ordinary
+// function as SumDBTree mutator.
+type SumDBTreeFunc func(context.Context, *ent.SumDBTreeMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f SumDBTreeFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.SumDBTreeMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.SumDBTreeMutation", m)
+}
+
 // Condition is a hook condition function.
 type Condition func(context.Context, ent.Mutation) bool
 

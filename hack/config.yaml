@@ -1,10 +1,15 @@
 addr: :8080
 metricsAddr: :9090
 
+# Generated with `go run ./cmd/server --keygen && mv keys.bin ./hack/`
+cryptoKey: hack/keys.bin
+
 db:
-  dialect: sqlite
+  dialect: sqlite3
   dsn: file:ent?mode=memory&_fk=1
 
 go:
   noSumPatterns:
     - gitlab.com/pseudomuto/*
+  sumdbs:
+    - test.sumdb.com

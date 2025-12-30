@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	_ "github.com/mattn/go-sqlite3"
 	"github.com/pseudomuto/pacman/internal/config"
 	"github.com/pseudomuto/pacman/internal/ent"
 	"go.uber.org/fx"

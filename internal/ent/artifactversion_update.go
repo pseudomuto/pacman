@@ -105,6 +105,16 @@ func (_u *ArtifactVersionUpdate) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (_u *ArtifactVersionUpdate) check() error {
+	if v, ok := _u.mutation.Version(); ok {
+		if err := artifactversion.VersionValidator(v); err != nil {
+			return &ValidationError{Name: "version", err: fmt.Errorf(`ent: validator failed for field "ArtifactVersion.version": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.URI(); ok {
+		if err := artifactversion.URIValidator(v); err != nil {
+			return &ValidationError{Name: "uri", err: fmt.Errorf(`ent: validator failed for field "ArtifactVersion.uri": %w`, err)}
+		}
+	}
 	if _u.mutation.ArtifactCleared() && len(_u.mutation.ArtifactIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "ArtifactVersion.artifact"`)
 	}
@@ -242,6 +252,16 @@ func (_u *ArtifactVersionUpdateOne) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (_u *ArtifactVersionUpdateOne) check() error {
+	if v, ok := _u.mutation.Version(); ok {
+		if err := artifactversion.VersionValidator(v); err != nil {
+			return &ValidationError{Name: "version", err: fmt.Errorf(`ent: validator failed for field "ArtifactVersion.version": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.URI(); ok {
+		if err := artifactversion.URIValidator(v); err != nil {
+			return &ValidationError{Name: "uri", err: fmt.Errorf(`ent: validator failed for field "ArtifactVersion.uri": %w`, err)}
+		}
+	}
 	if _u.mutation.ArtifactCleared() && len(_u.mutation.ArtifactIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "ArtifactVersion.artifact"`)
 	}
