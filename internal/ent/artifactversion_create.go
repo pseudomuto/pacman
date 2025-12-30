@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"time"
 
+	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/pseudomuto/pacman/internal/ent/artifact"
@@ -19,6 +20,7 @@ type ArtifactVersionCreate struct {
 	config
 	mutation *ArtifactVersionMutation
 	hooks    []Hook
+	conflict []sql.ConflictOption
 }
 
 // SetCreatedAt sets the "created_at" field.
@@ -128,8 +130,18 @@ func (_c *ArtifactVersionCreate) check() error {
 	if _, ok := _c.mutation.Version(); !ok {
 		return &ValidationError{Name: "version", err: errors.New(`ent: missing required field "ArtifactVersion.version"`)}
 	}
+	if v, ok := _c.mutation.Version(); ok {
+		if err := artifactversion.VersionValidator(v); err != nil {
+			return &ValidationError{Name: "version", err: fmt.Errorf(`ent: validator failed for field "ArtifactVersion.version": %w`, err)}
+		}
+	}
 	if _, ok := _c.mutation.URI(); !ok {
 		return &ValidationError{Name: "uri", err: errors.New(`ent: missing required field "ArtifactVersion.uri"`)}
+	}
+	if v, ok := _c.mutation.URI(); ok {
+		if err := artifactversion.URIValidator(v); err != nil {
+			return &ValidationError{Name: "uri", err: fmt.Errorf(`ent: validator failed for field "ArtifactVersion.uri": %w`, err)}
+		}
 	}
 	if len(_c.mutation.ArtifactIDs()) == 0 {
 		return &ValidationError{Name: "artifact", err: errors.New(`ent: missing required edge "ArtifactVersion.artifact"`)}
@@ -160,6 +172,7 @@ func (_c *ArtifactVersionCreate) createSpec() (*ArtifactVersion, *sqlgraph.Creat
 		_node = &ArtifactVersion{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(artifactversion.Table, sqlgraph.NewFieldSpec(artifactversion.FieldID, field.TypeInt))
 	)
+	_spec.OnConflict = _c.conflict
 	if value, ok := _c.mutation.CreatedAt(); ok {
 		_spec.SetField(artifactversion.FieldCreatedAt, field.TypeTime, value)
 		_node.CreatedAt = value
@@ -196,11 +209,217 @@ func (_c *ArtifactVersionCreate) createSpec() (*ArtifactVersion, *sqlgraph.Creat
 	return _node, _spec
 }
 
+// OnConflict allows configuring the `ON CONFLICT` / `ON DUPLICATE KEY` clause
+// of the `INSERT` statement. For example:
+//
+//	client.ArtifactVersion.Create().
+//		SetCreatedAt(v).
+//		OnConflict(
+//			// Update the row with the new values
+//			// the was proposed for insertion.
+//			sql.ResolveWithNewValues(),
+//		).
+//		// Override some of the fields with custom
+//		// update values.
+//		Update(func(u *ent.ArtifactVersionUpsert) {
+//			SetCreatedAt(v+v).
+//		}).
+//		Exec(ctx)
+func (_c *ArtifactVersionCreate) OnConflict(opts ...sql.ConflictOption) *ArtifactVersionUpsertOne {
+	_c.conflict = opts
+	return &ArtifactVersionUpsertOne{
+		create: _c,
+	}
+}
+
+// OnConflictColumns calls `OnConflict` and configures the columns
+// as conflict target. Using this option is equivalent to using:
+//
+//	client.ArtifactVersion.Create().
+//		OnConflict(sql.ConflictColumns(columns...)).
+//		Exec(ctx)
+func (_c *ArtifactVersionCreate) OnConflictColumns(columns ...string) *ArtifactVersionUpsertOne {
+	_c.conflict = append(_c.conflict, sql.ConflictColumns(columns...))
+	return &ArtifactVersionUpsertOne{
+		create: _c,
+	}
+}
+
+type (
+	// ArtifactVersionUpsertOne is the builder for "upsert"-ing
+	//  one ArtifactVersion node.
+	ArtifactVersionUpsertOne struct {
+		create *ArtifactVersionCreate
+	}
+
+	// ArtifactVersionUpsert is the "OnConflict" setter.
+	ArtifactVersionUpsert struct {
+		*sql.UpdateSet
+	}
+)
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *ArtifactVersionUpsert) SetUpdatedAt(v time.Time) *ArtifactVersionUpsert {
+	u.Set(artifactversion.FieldUpdatedAt, v)
+	return u
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *ArtifactVersionUpsert) UpdateUpdatedAt() *ArtifactVersionUpsert {
+	u.SetExcluded(artifactversion.FieldUpdatedAt)
+	return u
+}
+
+// SetVersion sets the "version" field.
+func (u *ArtifactVersionUpsert) SetVersion(v string) *ArtifactVersionUpsert {
+	u.Set(artifactversion.FieldVersion, v)
+	return u
+}
+
+// UpdateVersion sets the "version" field to the value that was provided on create.
+func (u *ArtifactVersionUpsert) UpdateVersion() *ArtifactVersionUpsert {
+	u.SetExcluded(artifactversion.FieldVersion)
+	return u
+}
+
+// SetURI sets the "uri" field.
+func (u *ArtifactVersionUpsert) SetURI(v string) *ArtifactVersionUpsert {
+	u.Set(artifactversion.FieldURI, v)
+	return u
+}
+
+// UpdateURI sets the "uri" field to the value that was provided on create.
+func (u *ArtifactVersionUpsert) UpdateURI() *ArtifactVersionUpsert {
+	u.SetExcluded(artifactversion.FieldURI)
+	return u
+}
+
+// UpdateNewValues updates the mutable fields using the new values that were set on create.
+// Using this option is equivalent to using:
+//
+//	client.ArtifactVersion.Create().
+//		OnConflict(
+//			sql.ResolveWithNewValues(),
+//		).
+//		Exec(ctx)
+func (u *ArtifactVersionUpsertOne) UpdateNewValues() *ArtifactVersionUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
+		if _, exists := u.create.mutation.CreatedAt(); exists {
+			s.SetIgnore(artifactversion.FieldCreatedAt)
+		}
+	}))
+	return u
+}
+
+// Ignore sets each column to itself in case of conflict.
+// Using this option is equivalent to using:
+//
+//	client.ArtifactVersion.Create().
+//	    OnConflict(sql.ResolveWithIgnore()).
+//	    Exec(ctx)
+func (u *ArtifactVersionUpsertOne) Ignore() *ArtifactVersionUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithIgnore())
+	return u
+}
+
+// DoNothing configures the conflict_action to `DO NOTHING`.
+// Supported only by SQLite and PostgreSQL.
+func (u *ArtifactVersionUpsertOne) DoNothing() *ArtifactVersionUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.DoNothing())
+	return u
+}
+
+// Update allows overriding fields `UPDATE` values. See the ArtifactVersionCreate.OnConflict
+// documentation for more info.
+func (u *ArtifactVersionUpsertOne) Update(set func(*ArtifactVersionUpsert)) *ArtifactVersionUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(update *sql.UpdateSet) {
+		set(&ArtifactVersionUpsert{UpdateSet: update})
+	}))
+	return u
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *ArtifactVersionUpsertOne) SetUpdatedAt(v time.Time) *ArtifactVersionUpsertOne {
+	return u.Update(func(s *ArtifactVersionUpsert) {
+		s.SetUpdatedAt(v)
+	})
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *ArtifactVersionUpsertOne) UpdateUpdatedAt() *ArtifactVersionUpsertOne {
+	return u.Update(func(s *ArtifactVersionUpsert) {
+		s.UpdateUpdatedAt()
+	})
+}
+
+// SetVersion sets the "version" field.
+func (u *ArtifactVersionUpsertOne) SetVersion(v string) *ArtifactVersionUpsertOne {
+	return u.Update(func(s *ArtifactVersionUpsert) {
+		s.SetVersion(v)
+	})
+}
+
+// UpdateVersion sets the "version" field to the value that was provided on create.
+func (u *ArtifactVersionUpsertOne) UpdateVersion() *ArtifactVersionUpsertOne {
+	return u.Update(func(s *ArtifactVersionUpsert) {
+		s.UpdateVersion()
+	})
+}
+
+// SetURI sets the "uri" field.
+func (u *ArtifactVersionUpsertOne) SetURI(v string) *ArtifactVersionUpsertOne {
+	return u.Update(func(s *ArtifactVersionUpsert) {
+		s.SetURI(v)
+	})
+}
+
+// UpdateURI sets the "uri" field to the value that was provided on create.
+func (u *ArtifactVersionUpsertOne) UpdateURI() *ArtifactVersionUpsertOne {
+	return u.Update(func(s *ArtifactVersionUpsert) {
+		s.UpdateURI()
+	})
+}
+
+// Exec executes the query.
+func (u *ArtifactVersionUpsertOne) Exec(ctx context.Context) error {
+	if len(u.create.conflict) == 0 {
+		return errors.New("ent: missing options for ArtifactVersionCreate.OnConflict")
+	}
+	return u.create.Exec(ctx)
+}
+
+// ExecX is like Exec, but panics if an error occurs.
+func (u *ArtifactVersionUpsertOne) ExecX(ctx context.Context) {
+	if err := u.create.Exec(ctx); err != nil {
+		panic(err)
+	}
+}
+
+// Exec executes the UPSERT query and returns the inserted/updated ID.
+func (u *ArtifactVersionUpsertOne) ID(ctx context.Context) (id int, err error) {
+	node, err := u.create.Save(ctx)
+	if err != nil {
+		return id, err
+	}
+	return node.ID, nil
+}
+
+// IDX is like ID, but panics if an error occurs.
+func (u *ArtifactVersionUpsertOne) IDX(ctx context.Context) int {
+	id, err := u.ID(ctx)
+	if err != nil {
+		panic(err)
+	}
+	return id
+}
+
 // ArtifactVersionCreateBulk is the builder for creating many ArtifactVersion entities in bulk.
 type ArtifactVersionCreateBulk struct {
 	config
 	err      error
 	builders []*ArtifactVersionCreate
+	conflict []sql.ConflictOption
 }
 
 // Save creates the ArtifactVersion entities in the database.
@@ -230,6 +449,7 @@ func (_c *ArtifactVersionCreateBulk) Save(ctx context.Context) ([]*ArtifactVersi
 					_, err = mutators[i+1].Mutate(root, _c.builders[i+1].mutation)
 				} else {
 					spec := &sqlgraph.BatchCreateSpec{Nodes: specs}
+					spec.OnConflict = _c.conflict
 					// Invoke the actual operation on the latest mutation in the chain.
 					if err = sqlgraph.BatchCreate(ctx, _c.driver, spec); err != nil {
 						if sqlgraph.IsConstraintError(err) {
@@ -280,6 +500,159 @@ func (_c *ArtifactVersionCreateBulk) Exec(ctx context.Context) error {
 // ExecX is like Exec, but panics if an error occurs.
 func (_c *ArtifactVersionCreateBulk) ExecX(ctx context.Context) {
 	if err := _c.Exec(ctx); err != nil {
+		panic(err)
+	}
+}
+
+// OnConflict allows configuring the `ON CONFLICT` / `ON DUPLICATE KEY` clause
+// of the `INSERT` statement. For example:
+//
+//	client.ArtifactVersion.CreateBulk(builders...).
+//		OnConflict(
+//			// Update the row with the new values
+//			// the was proposed for insertion.
+//			sql.ResolveWithNewValues(),
+//		).
+//		// Override some of the fields with custom
+//		// update values.
+//		Update(func(u *ent.ArtifactVersionUpsert) {
+//			SetCreatedAt(v+v).
+//		}).
+//		Exec(ctx)
+func (_c *ArtifactVersionCreateBulk) OnConflict(opts ...sql.ConflictOption) *ArtifactVersionUpsertBulk {
+	_c.conflict = opts
+	return &ArtifactVersionUpsertBulk{
+		create: _c,
+	}
+}
+
+// OnConflictColumns calls `OnConflict` and configures the columns
+// as conflict target. Using this option is equivalent to using:
+//
+//	client.ArtifactVersion.Create().
+//		OnConflict(sql.ConflictColumns(columns...)).
+//		Exec(ctx)
+func (_c *ArtifactVersionCreateBulk) OnConflictColumns(columns ...string) *ArtifactVersionUpsertBulk {
+	_c.conflict = append(_c.conflict, sql.ConflictColumns(columns...))
+	return &ArtifactVersionUpsertBulk{
+		create: _c,
+	}
+}
+
+// ArtifactVersionUpsertBulk is the builder for "upsert"-ing
+// a bulk of ArtifactVersion nodes.
+type ArtifactVersionUpsertBulk struct {
+	create *ArtifactVersionCreateBulk
+}
+
+// UpdateNewValues updates the mutable fields using the new values that
+// were set on create. Using this option is equivalent to using:
+//
+//	client.ArtifactVersion.Create().
+//		OnConflict(
+//			sql.ResolveWithNewValues(),
+//		).
+//		Exec(ctx)
+func (u *ArtifactVersionUpsertBulk) UpdateNewValues() *ArtifactVersionUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
+		for _, b := range u.create.builders {
+			if _, exists := b.mutation.CreatedAt(); exists {
+				s.SetIgnore(artifactversion.FieldCreatedAt)
+			}
+		}
+	}))
+	return u
+}
+
+// Ignore sets each column to itself in case of conflict.
+// Using this option is equivalent to using:
+//
+//	client.ArtifactVersion.Create().
+//		OnConflict(sql.ResolveWithIgnore()).
+//		Exec(ctx)
+func (u *ArtifactVersionUpsertBulk) Ignore() *ArtifactVersionUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithIgnore())
+	return u
+}
+
+// DoNothing configures the conflict_action to `DO NOTHING`.
+// Supported only by SQLite and PostgreSQL.
+func (u *ArtifactVersionUpsertBulk) DoNothing() *ArtifactVersionUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.DoNothing())
+	return u
+}
+
+// Update allows overriding fields `UPDATE` values. See the ArtifactVersionCreateBulk.OnConflict
+// documentation for more info.
+func (u *ArtifactVersionUpsertBulk) Update(set func(*ArtifactVersionUpsert)) *ArtifactVersionUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(update *sql.UpdateSet) {
+		set(&ArtifactVersionUpsert{UpdateSet: update})
+	}))
+	return u
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *ArtifactVersionUpsertBulk) SetUpdatedAt(v time.Time) *ArtifactVersionUpsertBulk {
+	return u.Update(func(s *ArtifactVersionUpsert) {
+		s.SetUpdatedAt(v)
+	})
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *ArtifactVersionUpsertBulk) UpdateUpdatedAt() *ArtifactVersionUpsertBulk {
+	return u.Update(func(s *ArtifactVersionUpsert) {
+		s.UpdateUpdatedAt()
+	})
+}
+
+// SetVersion sets the "version" field.
+func (u *ArtifactVersionUpsertBulk) SetVersion(v string) *ArtifactVersionUpsertBulk {
+	return u.Update(func(s *ArtifactVersionUpsert) {
+		s.SetVersion(v)
+	})
+}
+
+// UpdateVersion sets the "version" field to the value that was provided on create.
+func (u *ArtifactVersionUpsertBulk) UpdateVersion() *ArtifactVersionUpsertBulk {
+	return u.Update(func(s *ArtifactVersionUpsert) {
+		s.UpdateVersion()
+	})
+}
+
+// SetURI sets the "uri" field.
+func (u *ArtifactVersionUpsertBulk) SetURI(v string) *ArtifactVersionUpsertBulk {
+	return u.Update(func(s *ArtifactVersionUpsert) {
+		s.SetURI(v)
+	})
+}
+
+// UpdateURI sets the "uri" field to the value that was provided on create.
+func (u *ArtifactVersionUpsertBulk) UpdateURI() *ArtifactVersionUpsertBulk {
+	return u.Update(func(s *ArtifactVersionUpsert) {
+		s.UpdateURI()
+	})
+}
+
+// Exec executes the query.
+func (u *ArtifactVersionUpsertBulk) Exec(ctx context.Context) error {
+	if u.create.err != nil {
+		return u.create.err
+	}
+	for i, b := range u.create.builders {
+		if len(b.conflict) != 0 {
+			return fmt.Errorf("ent: OnConflict was set for builder %d. Set it on the ArtifactVersionCreateBulk instead", i)
+		}
+	}
+	if len(u.create.conflict) == 0 {
+		return errors.New("ent: missing options for ArtifactVersionCreateBulk.OnConflict")
+	}
+	return u.create.Exec(ctx)
+}
+
+// ExecX is like Exec, but panics if an error occurs.
+func (u *ArtifactVersionUpsertBulk) ExecX(ctx context.Context) {
+	if err := u.create.Exec(ctx); err != nil {
 		panic(err)
 	}
 }

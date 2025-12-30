@@ -44,7 +44,7 @@ tasks:
   ent:gen:
     desc: Generate ent code
     cmds:
-      - go tool ent generate ./internal/ent/schema
+      - go tool ent generate ./internal/ent/schema --feature sql/upsert
 
   ent:sql:
     desc: Show the generated SQL for all entities

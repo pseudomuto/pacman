@@ -11,3 +11,12 @@ type Artifact func(*sql.Selector)
 
 // ArtifactVersion is the predicate function for artifactversion builders.
 type ArtifactVersion func(*sql.Selector)
+
+// SumDBHash is the predicate function for sumdbhash builders.
+type SumDBHash func(*sql.Selector)
+
+// SumDBRecord is the predicate function for sumdbrecord builders.
+type SumDBRecord func(*sql.Selector)
+
+// SumDBTree is the predicate function for sumdbtree builders.
+type SumDBTree func(*sql.Selector)

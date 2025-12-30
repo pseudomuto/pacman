@@ -2,18 +2,19 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"os"
 
-	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/pseudomuto/pacman/internal/config"
+	"github.com/pseudomuto/pacman/internal/crypto"
 	"github.com/pseudomuto/pacman/internal/data"
 	"github.com/pseudomuto/pacman/internal/packager"
-	"github.com/pseudomuto/pacman/internal/proxy"
 	"github.com/pseudomuto/pacman/internal/publisher"
 	"github.com/pseudomuto/pacman/internal/server"
 	"github.com/pseudomuto/pacman/internal/storage"
+	"github.com/pseudomuto/pacman/internal/sumdb"
 	"github.com/urfave/cli/v3"
 	"go.uber.org/fx"
 )
@@ -35,23 +36,42 @@ func main() {
 				Sources:   cli.EnvVars("PACMAN_CONFIG"),
 				TakesFile: true,
 			},
+			&cli.BoolFlag{
+				Name:  "keygen",
+				Usage: "Generate a new Tink keyset",
+			},
 		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
+			if cmd.Bool("keygen") {
+				kh, err := crypto.CreateKey("keys.bin")
+				if err != nil {
+					return err
+				}
+
+				fmt.Fprintln(cmd.Writer, "Generated Tink keyset:")
+				fmt.Fprintln(cmd.Writer, kh.String())
+				return nil
+			}
+
 			app := fx.New(
 				fx.Supply(config.ConfigFilePath(cmd.String("config"))),
 				fx.Provide(
 					slog.Default,
 					promRegistry,
-					serverConfig,
 				),
 				config.Module,
+				crypto.Module,
 				data.Module,
 				packager.Module,
-				proxy.Module,
 				publisher.Module,
 				server.Module,
 				storage.Module,
+				sumdb.Module,
 				fx.NopLogger,
+
+				fx.Invoke(func(dbs []*sumdb.SumDB) {
+					slog.Info("Registered sumdbs", "num", len(dbs))
+				}),
 			)
 
 			if err := app.Err(); err != nil {
@@ -70,12 +90,4 @@ func main() {
 
 func promRegistry() *prometheus.Registry {
 	return prometheus.DefaultRegisterer.(*prometheus.Registry)
-}
-
-func serverConfig(c *config.Config) *server.ServerConfig {
-	return &server.ServerConfig{
-		ListenAddr:  c.Addr,
-		MetricsAddr: c.MetricsAddr,
-		GinMode:     gin.ReleaseMode,
-	}
 }

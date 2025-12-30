@@ -20,6 +20,7 @@ type (
 		Debug       bool     `yaml:"debug"`
 		DB          Database `yaml:"db"`
 		Go          Go       `yaml:"go"`
+		CryptoKey   string   `yaml:"cryptoKey"`
 	}
 
 	Database struct {
@@ -29,6 +30,7 @@ type (
 
 	Go struct {
 		NoSumPatterns []string `yaml:"noSumPatterns,omitempty"`
+		SumDBs        []string `yaml:"sumdbs,omitempty"`
 	}
 )
 
@@ -43,6 +45,7 @@ func Load(r io.Reader, exp EnvExpander) (*Config, error) {
 	c.MetricsAddr = exp(c.MetricsAddr)
 	c.DB.Dialect = exp(c.DB.Dialect)
 	c.DB.DSN = exp(c.DB.DSN)
+	c.CryptoKey = exp(c.CryptoKey)
 
 	return &c, nil
 }

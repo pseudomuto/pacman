@@ -4,6 +4,8 @@
 package api
 
 import (
+	"time"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -12,8 +14,22 @@ type HealthCheckResponse struct {
 	Status string `json:"status"`
 }
 
+// SumDBTree defines model for SumDBTree.
+type SumDBTree struct {
+	CreatedAt   time.Time `json:"createdAt"`
+	Name        string    `json:"name"`
+	UpdatedAt   time.Time `json:"updatedAt"`
+	VerifierKey string    `json:"verifierKey"`
+}
+
+// SumDBTreeList defines model for SumDBTreeList.
+type SumDBTreeList = []SumDBTree
+
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
+	// List available sumdb trees
+	// (GET /api/v1/sumdb/trees)
+	GetSumDBs(c *gin.Context)
 
 	// (GET /healthz)
 	GetHealthz(c *gin.Context)
@@ -27,6 +43,19 @@ type ServerInterfaceWrapper struct {
 }
 
 type MiddlewareFunc func(c *gin.Context)
+
+// GetSumDBs operation middleware
+func (siw *ServerInterfaceWrapper) GetSumDBs(c *gin.Context) {
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.GetSumDBs(c)
+}
 
 // GetHealthz operation middleware
 func (siw *ServerInterfaceWrapper) GetHealthz(c *gin.Context) {
@@ -68,5 +97,6 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 		ErrorHandler:       errorHandler,
 	}
 
+	router.GET(options.BaseURL+"/api/v1/sumdb/trees", wrapper.GetSumDBs)
 	router.GET(options.BaseURL+"/healthz", wrapper.GetHealthz)
 }

@@ -14,6 +14,9 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/pseudomuto/pacman/internal/ent/artifact"
 	"github.com/pseudomuto/pacman/internal/ent/artifactversion"
+	"github.com/pseudomuto/pacman/internal/ent/sumdbhash"
+	"github.com/pseudomuto/pacman/internal/ent/sumdbrecord"
+	"github.com/pseudomuto/pacman/internal/ent/sumdbtree"
 )
 
 // ent aliases to avoid import conflicts in user's code.
@@ -76,6 +79,9 @@ func checkColumn(t, c string) error {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
 			artifact.Table:        artifact.ValidColumn,
 			artifactversion.Table: artifactversion.ValidColumn,
+			sumdbhash.Table:       sumdbhash.ValidColumn,
+			sumdbrecord.Table:     sumdbrecord.ValidColumn,
+			sumdbtree.Table:       sumdbtree.ValidColumn,
 		})
 	})
 	return columnCheck(t, c)

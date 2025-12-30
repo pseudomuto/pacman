@@ -3,6 +3,18 @@ info:
   version: 0.1.0
   title: PacMan API
 paths:
+  /api/v1/sumdb/trees:
+    get:
+      summary: List available sumdb trees
+      operationId: getSumDBs
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SumDBTreeList"
+
   /healthz:
     get:
       responses:
@@ -21,3 +33,26 @@ components:
         status:
           type: string
           example: OK
+    SumDBTree:
+      type: object
+      additionalProperties: false
+      required:
+        - name
+        - verifierKey
+        - createdAt
+        - updatedAt
+      properties:
+        name:
+          type: string
+        verifierKey:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    SumDBTreeList:
+      type: array
+      items:
+        $ref: "#/components/schemas/SumDBTree"

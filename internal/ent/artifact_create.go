@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"time"
 
+	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/pseudomuto/pacman/internal/ent/artifact"
@@ -20,6 +21,7 @@ type ArtifactCreate struct {
 	config
 	mutation *ArtifactMutation
 	hooks    []Hook
+	conflict []sql.ConflictOption
 }
 
 // SetCreatedAt sets the "created_at" field.
@@ -181,6 +183,7 @@ func (_c *ArtifactCreate) createSpec() (*Artifact, *sqlgraph.CreateSpec) {
 		_node = &Artifact{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(artifact.Table, sqlgraph.NewFieldSpec(artifact.FieldID, field.TypeInt))
 	)
+	_spec.OnConflict = _c.conflict
 	if value, ok := _c.mutation.CreatedAt(); ok {
 		_spec.SetField(artifact.FieldCreatedAt, field.TypeTime, value)
 		_node.CreatedAt = value
@@ -220,11 +223,243 @@ func (_c *ArtifactCreate) createSpec() (*Artifact, *sqlgraph.CreateSpec) {
 	return _node, _spec
 }
 
+// OnConflict allows configuring the `ON CONFLICT` / `ON DUPLICATE KEY` clause
+// of the `INSERT` statement. For example:
+//
+//	client.Artifact.Create().
+//		SetCreatedAt(v).
+//		OnConflict(
+//			// Update the row with the new values
+//			// the was proposed for insertion.
+//			sql.ResolveWithNewValues(),
+//		).
+//		// Override some of the fields with custom
+//		// update values.
+//		Update(func(u *ent.ArtifactUpsert) {
+//			SetCreatedAt(v+v).
+//		}).
+//		Exec(ctx)
+func (_c *ArtifactCreate) OnConflict(opts ...sql.ConflictOption) *ArtifactUpsertOne {
+	_c.conflict = opts
+	return &ArtifactUpsertOne{
+		create: _c,
+	}
+}
+
+// OnConflictColumns calls `OnConflict` and configures the columns
+// as conflict target. Using this option is equivalent to using:
+//
+//	client.Artifact.Create().
+//		OnConflict(sql.ConflictColumns(columns...)).
+//		Exec(ctx)
+func (_c *ArtifactCreate) OnConflictColumns(columns ...string) *ArtifactUpsertOne {
+	_c.conflict = append(_c.conflict, sql.ConflictColumns(columns...))
+	return &ArtifactUpsertOne{
+		create: _c,
+	}
+}
+
+type (
+	// ArtifactUpsertOne is the builder for "upsert"-ing
+	//  one Artifact node.
+	ArtifactUpsertOne struct {
+		create *ArtifactCreate
+	}
+
+	// ArtifactUpsert is the "OnConflict" setter.
+	ArtifactUpsert struct {
+		*sql.UpdateSet
+	}
+)
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *ArtifactUpsert) SetUpdatedAt(v time.Time) *ArtifactUpsert {
+	u.Set(artifact.FieldUpdatedAt, v)
+	return u
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *ArtifactUpsert) UpdateUpdatedAt() *ArtifactUpsert {
+	u.SetExcluded(artifact.FieldUpdatedAt)
+	return u
+}
+
+// SetName sets the "name" field.
+func (u *ArtifactUpsert) SetName(v string) *ArtifactUpsert {
+	u.Set(artifact.FieldName, v)
+	return u
+}
+
+// UpdateName sets the "name" field to the value that was provided on create.
+func (u *ArtifactUpsert) UpdateName() *ArtifactUpsert {
+	u.SetExcluded(artifact.FieldName)
+	return u
+}
+
+// SetDescription sets the "description" field.
+func (u *ArtifactUpsert) SetDescription(v string) *ArtifactUpsert {
+	u.Set(artifact.FieldDescription, v)
+	return u
+}
+
+// UpdateDescription sets the "description" field to the value that was provided on create.
+func (u *ArtifactUpsert) UpdateDescription() *ArtifactUpsert {
+	u.SetExcluded(artifact.FieldDescription)
+	return u
+}
+
+// SetType sets the "type" field.
+func (u *ArtifactUpsert) SetType(v types.ArchiveType) *ArtifactUpsert {
+	u.Set(artifact.FieldType, v)
+	return u
+}
+
+// UpdateType sets the "type" field to the value that was provided on create.
+func (u *ArtifactUpsert) UpdateType() *ArtifactUpsert {
+	u.SetExcluded(artifact.FieldType)
+	return u
+}
+
+// UpdateNewValues updates the mutable fields using the new values that were set on create.
+// Using this option is equivalent to using:
+//
+//	client.Artifact.Create().
+//		OnConflict(
+//			sql.ResolveWithNewValues(),
+//		).
+//		Exec(ctx)
+func (u *ArtifactUpsertOne) UpdateNewValues() *ArtifactUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
+		if _, exists := u.create.mutation.CreatedAt(); exists {
+			s.SetIgnore(artifact.FieldCreatedAt)
+		}
+	}))
+	return u
+}
+
+// Ignore sets each column to itself in case of conflict.
+// Using this option is equivalent to using:
+//
+//	client.Artifact.Create().
+//	    OnConflict(sql.ResolveWithIgnore()).
+//	    Exec(ctx)
+func (u *ArtifactUpsertOne) Ignore() *ArtifactUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithIgnore())
+	return u
+}
+
+// DoNothing configures the conflict_action to `DO NOTHING`.
+// Supported only by SQLite and PostgreSQL.
+func (u *ArtifactUpsertOne) DoNothing() *ArtifactUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.DoNothing())
+	return u
+}
+
+// Update allows overriding fields `UPDATE` values. See the ArtifactCreate.OnConflict
+// documentation for more info.
+func (u *ArtifactUpsertOne) Update(set func(*ArtifactUpsert)) *ArtifactUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(update *sql.UpdateSet) {
+		set(&ArtifactUpsert{UpdateSet: update})
+	}))
+	return u
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *ArtifactUpsertOne) SetUpdatedAt(v time.Time) *ArtifactUpsertOne {
+	return u.Update(func(s *ArtifactUpsert) {
+		s.SetUpdatedAt(v)
+	})
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *ArtifactUpsertOne) UpdateUpdatedAt() *ArtifactUpsertOne {
+	return u.Update(func(s *ArtifactUpsert) {
+		s.UpdateUpdatedAt()
+	})
+}
+
+// SetName sets the "name" field.
+func (u *ArtifactUpsertOne) SetName(v string) *ArtifactUpsertOne {
+	return u.Update(func(s *ArtifactUpsert) {
+		s.SetName(v)
+	})
+}
+
+// UpdateName sets the "name" field to the value that was provided on create.
+func (u *ArtifactUpsertOne) UpdateName() *ArtifactUpsertOne {
+	return u.Update(func(s *ArtifactUpsert) {
+		s.UpdateName()
+	})
+}
+
+// SetDescription sets the "description" field.
+func (u *ArtifactUpsertOne) SetDescription(v string) *ArtifactUpsertOne {
+	return u.Update(func(s *ArtifactUpsert) {
+		s.SetDescription(v)
+	})
+}
+
+// UpdateDescription sets the "description" field to the value that was provided on create.
+func (u *ArtifactUpsertOne) UpdateDescription() *ArtifactUpsertOne {
+	return u.Update(func(s *ArtifactUpsert) {
+		s.UpdateDescription()
+	})
+}
+
+// SetType sets the "type" field.
+func (u *ArtifactUpsertOne) SetType(v types.ArchiveType) *ArtifactUpsertOne {
+	return u.Update(func(s *ArtifactUpsert) {
+		s.SetType(v)
+	})
+}
+
+// UpdateType sets the "type" field to the value that was provided on create.
+func (u *ArtifactUpsertOne) UpdateType() *ArtifactUpsertOne {
+	return u.Update(func(s *ArtifactUpsert) {
+		s.UpdateType()
+	})
+}
+
+// Exec executes the query.
+func (u *ArtifactUpsertOne) Exec(ctx context.Context) error {
+	if len(u.create.conflict) == 0 {
+		return errors.New("ent: missing options for ArtifactCreate.OnConflict")
+	}
+	return u.create.Exec(ctx)
+}
+
+// ExecX is like Exec, but panics if an error occurs.
+func (u *ArtifactUpsertOne) ExecX(ctx context.Context) {
+	if err := u.create.Exec(ctx); err != nil {
+		panic(err)
+	}
+}
+
+// Exec executes the UPSERT query and returns the inserted/updated ID.
+func (u *ArtifactUpsertOne) ID(ctx context.Context) (id int, err error) {
+	node, err := u.create.Save(ctx)
+	if err != nil {
+		return id, err
+	}
+	return node.ID, nil
+}
+
+// IDX is like ID, but panics if an error occurs.
+func (u *ArtifactUpsertOne) IDX(ctx context.Context) int {
+	id, err := u.ID(ctx)
+	if err != nil {
+		panic(err)
+	}
+	return id
+}
+
 // ArtifactCreateBulk is the builder for creating many Artifact entities in bulk.
 type ArtifactCreateBulk struct {
 	config
 	err      error
 	builders []*ArtifactCreate
+	conflict []sql.ConflictOption
 }
 
 // Save creates the Artifact entities in the database.
@@ -254,6 +489,7 @@ func (_c *ArtifactCreateBulk) Save(ctx context.Context) ([]*Artifact, error) {
 					_, err = mutators[i+1].Mutate(root, _c.builders[i+1].mutation)
 				} else {
 					spec := &sqlgraph.BatchCreateSpec{Nodes: specs}
+					spec.OnConflict = _c.conflict
 					// Invoke the actual operation on the latest mutation in the chain.
 					if err = sqlgraph.BatchCreate(ctx, _c.driver, spec); err != nil {
 						if sqlgraph.IsConstraintError(err) {
@@ -304,6 +540,173 @@ func (_c *ArtifactCreateBulk) Exec(ctx context.Context) error {
 // ExecX is like Exec, but panics if an error occurs.
 func (_c *ArtifactCreateBulk) ExecX(ctx context.Context) {
 	if err := _c.Exec(ctx); err != nil {
+		panic(err)
+	}
+}
+
+// OnConflict allows configuring the `ON CONFLICT` / `ON DUPLICATE KEY` clause
+// of the `INSERT` statement. For example:
+//
+//	client.Artifact.CreateBulk(builders...).
+//		OnConflict(
+//			// Update the row with the new values
+//			// the was proposed for insertion.
+//			sql.ResolveWithNewValues(),
+//		).
+//		// Override some of the fields with custom
+//		// update values.
+//		Update(func(u *ent.ArtifactUpsert) {
+//			SetCreatedAt(v+v).
+//		}).
+//		Exec(ctx)
+func (_c *ArtifactCreateBulk) OnConflict(opts ...sql.ConflictOption) *ArtifactUpsertBulk {
+	_c.conflict = opts
+	return &ArtifactUpsertBulk{
+		create: _c,
+	}
+}
+
+// OnConflictColumns calls `OnConflict` and configures the columns
+// as conflict target. Using this option is equivalent to using:
+//
+//	client.Artifact.Create().
+//		OnConflict(sql.ConflictColumns(columns...)).
+//		Exec(ctx)
+func (_c *ArtifactCreateBulk) OnConflictColumns(columns ...string) *ArtifactUpsertBulk {
+	_c.conflict = append(_c.conflict, sql.ConflictColumns(columns...))
+	return &ArtifactUpsertBulk{
+		create: _c,
+	}
+}
+
+// ArtifactUpsertBulk is the builder for "upsert"-ing
+// a bulk of Artifact nodes.
+type ArtifactUpsertBulk struct {
+	create *ArtifactCreateBulk
+}
+
+// UpdateNewValues updates the mutable fields using the new values that
+// were set on create. Using this option is equivalent to using:
+//
+//	client.Artifact.Create().
+//		OnConflict(
+//			sql.ResolveWithNewValues(),
+//		).
+//		Exec(ctx)
+func (u *ArtifactUpsertBulk) UpdateNewValues() *ArtifactUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
+		for _, b := range u.create.builders {
+			if _, exists := b.mutation.CreatedAt(); exists {
+				s.SetIgnore(artifact.FieldCreatedAt)
+			}
+		}
+	}))
+	return u
+}
+
+// Ignore sets each column to itself in case of conflict.
+// Using this option is equivalent to using:
+//
+//	client.Artifact.Create().
+//		OnConflict(sql.ResolveWithIgnore()).
+//		Exec(ctx)
+func (u *ArtifactUpsertBulk) Ignore() *ArtifactUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithIgnore())
+	return u
+}
+
+// DoNothing configures the conflict_action to `DO NOTHING`.
+// Supported only by SQLite and PostgreSQL.
+func (u *ArtifactUpsertBulk) DoNothing() *ArtifactUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.DoNothing())
+	return u
+}
+
+// Update allows overriding fields `UPDATE` values. See the ArtifactCreateBulk.OnConflict
+// documentation for more info.
+func (u *ArtifactUpsertBulk) Update(set func(*ArtifactUpsert)) *ArtifactUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(update *sql.UpdateSet) {
+		set(&ArtifactUpsert{UpdateSet: update})
+	}))
+	return u
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (u *ArtifactUpsertBulk) SetUpdatedAt(v time.Time) *ArtifactUpsertBulk {
+	return u.Update(func(s *ArtifactUpsert) {
+		s.SetUpdatedAt(v)
+	})
+}
+
+// UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
+func (u *ArtifactUpsertBulk) UpdateUpdatedAt() *ArtifactUpsertBulk {
+	return u.Update(func(s *ArtifactUpsert) {
+		s.UpdateUpdatedAt()
+	})
+}
+
+// SetName sets the "name" field.
+func (u *ArtifactUpsertBulk) SetName(v string) *ArtifactUpsertBulk {
+	return u.Update(func(s *ArtifactUpsert) {
+		s.SetName(v)
+	})
+}
+
+// UpdateName sets the "name" field to the value that was provided on create.
+func (u *ArtifactUpsertBulk) UpdateName() *ArtifactUpsertBulk {
+	return u.Update(func(s *ArtifactUpsert) {
+		s.UpdateName()
+	})
+}
+
+// SetDescription sets the "description" field.
+func (u *ArtifactUpsertBulk) SetDescription(v string) *ArtifactUpsertBulk {
+	return u.Update(func(s *ArtifactUpsert) {
+		s.SetDescription(v)
+	})
+}
+
+// UpdateDescription sets the "description" field to the value that was provided on create.
+func (u *ArtifactUpsertBulk) UpdateDescription() *ArtifactUpsertBulk {
+	return u.Update(func(s *ArtifactUpsert) {
+		s.UpdateDescription()
+	})
+}
+
+// SetType sets the "type" field.
+func (u *ArtifactUpsertBulk) SetType(v types.ArchiveType) *ArtifactUpsertBulk {
+	return u.Update(func(s *ArtifactUpsert) {
+		s.SetType(v)
+	})
+}
+
+// UpdateType sets the "type" field to the value that was provided on create.
+func (u *ArtifactUpsertBulk) UpdateType() *ArtifactUpsertBulk {
+	return u.Update(func(s *ArtifactUpsert) {
+		s.UpdateType()
+	})
+}
+
+// Exec executes the query.
+func (u *ArtifactUpsertBulk) Exec(ctx context.Context) error {
+	if u.create.err != nil {
+		return u.create.err
+	}
+	for i, b := range u.create.builders {
+		if len(b.conflict) != 0 {
+			return fmt.Errorf("ent: OnConflict was set for builder %d. Set it on the ArtifactCreateBulk instead", i)
+		}
+	}
+	if len(u.create.conflict) == 0 {
+		return errors.New("ent: missing options for ArtifactCreateBulk.OnConflict")
+	}
+	return u.create.Exec(ctx)
+}
+
+// ExecX is like Exec, but panics if an error occurs.
+func (u *ArtifactUpsertBulk) ExecX(ctx context.Context) {
+	if err := u.create.Exec(ctx); err != nil {
 		panic(err)
 	}
 }

@@ -11,9 +11,13 @@ import (
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
+	"github.com/pseudomuto/pacman/internal/crypto"
 	"github.com/pseudomuto/pacman/internal/ent/artifact"
 	"github.com/pseudomuto/pacman/internal/ent/artifactversion"
 	"github.com/pseudomuto/pacman/internal/ent/predicate"
+	"github.com/pseudomuto/pacman/internal/ent/sumdbhash"
+	"github.com/pseudomuto/pacman/internal/ent/sumdbrecord"
+	"github.com/pseudomuto/pacman/internal/ent/sumdbtree"
 	"github.com/pseudomuto/pacman/internal/types"
 )
 
@@ -28,6 +32,9 @@ const (
 	// Node types.
 	TypeArtifact        = "Artifact"
 	TypeArtifactVersion = "ArtifactVersion"
+	TypeSumDBHash       = "SumDBHash"
+	TypeSumDBRecord     = "SumDBRecord"
+	TypeSumDBTree       = "SumDBTree"
 )
 
 // ArtifactMutation represents an operation that mutates the Artifact nodes in the graph.
@@ -1218,4 +1225,1922 @@ func (m *ArtifactVersionMutation) ResetEdge(name string) error {
 		return nil
 	}
 	return fmt.Errorf("unknown ArtifactVersion edge %s", name)
+}
+
+// SumDBHashMutation represents an operation that mutates the SumDBHash nodes in the graph.
+type SumDBHashMutation struct {
+	config
+	op            Op
+	typ           string
+	id            *int
+	created_at    *time.Time
+	updated_at    *time.Time
+	index         *int64
+	addindex      *int64
+	hash          *[]byte
+	clearedFields map[string]struct{}
+	tree          *int
+	clearedtree   bool
+	done          bool
+	oldValue      func(context.Context) (*SumDBHash, error)
+	predicates    []predicate.SumDBHash
+}
+
+var _ ent.Mutation = (*SumDBHashMutation)(nil)
+
+// sumdbhashOption allows management of the mutation configuration using functional options.
+type sumdbhashOption func(*SumDBHashMutation)
+
+// newSumDBHashMutation creates new mutation for the SumDBHash entity.
+func newSumDBHashMutation(c config, op Op, opts ...sumdbhashOption) *SumDBHashMutation {
+	m := &SumDBHashMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeSumDBHash,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withSumDBHashID sets the ID field of the mutation.
+func withSumDBHashID(id int) sumdbhashOption {
+	return func(m *SumDBHashMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *SumDBHash
+		)
+		m.oldValue = func(ctx context.Context) (*SumDBHash, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().SumDBHash.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withSumDBHash sets the old SumDBHash of the mutation.
+func withSumDBHash(node *SumDBHash) sumdbhashOption {
+	return func(m *SumDBHashMutation) {
+		m.oldValue = func(context.Context) (*SumDBHash, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m SumDBHashMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m SumDBHashMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *SumDBHashMutation) ID() (id int, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *SumDBHashMutation) IDs(ctx context.Context) ([]int, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().SumDBHash.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *SumDBHashMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *SumDBHashMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the SumDBHash entity.
+// If the SumDBHash object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *SumDBHashMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *SumDBHashMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (m *SumDBHashMutation) SetUpdatedAt(t time.Time) {
+	m.updated_at = &t
+}
+
+// UpdatedAt returns the value of the "updated_at" field in the mutation.
+func (m *SumDBHashMutation) UpdatedAt() (r time.Time, exists bool) {
+	v := m.updated_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdatedAt returns the old "updated_at" field's value of the SumDBHash entity.
+// If the SumDBHash object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *SumDBHashMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdatedAt: %w", err)
+	}
+	return oldValue.UpdatedAt, nil
+}
+
+// ResetUpdatedAt resets all changes to the "updated_at" field.
+func (m *SumDBHashMutation) ResetUpdatedAt() {
+	m.updated_at = nil
+}
+
+// SetIndex sets the "index" field.
+func (m *SumDBHashMutation) SetIndex(i int64) {
+	m.index = &i
+	m.addindex = nil
+}
+
+// Index returns the value of the "index" field in the mutation.
+func (m *SumDBHashMutation) Index() (r int64, exists bool) {
+	v := m.index
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldIndex returns the old "index" field's value of the SumDBHash entity.
+// If the SumDBHash object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *SumDBHashMutation) OldIndex(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldIndex is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldIndex requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldIndex: %w", err)
+	}
+	return oldValue.Index, nil
+}
+
+// AddIndex adds i to the "index" field.
+func (m *SumDBHashMutation) AddIndex(i int64) {
+	if m.addindex != nil {
+		*m.addindex += i
+	} else {
+		m.addindex = &i
+	}
+}
+
+// AddedIndex returns the value that was added to the "index" field in this mutation.
+func (m *SumDBHashMutation) AddedIndex() (r int64, exists bool) {
+	v := m.addindex
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetIndex resets all changes to the "index" field.
+func (m *SumDBHashMutation) ResetIndex() {
+	m.index = nil
+	m.addindex = nil
+}
+
+// SetHash sets the "hash" field.
+func (m *SumDBHashMutation) SetHash(b []byte) {
+	m.hash = &b
+}
+
+// Hash returns the value of the "hash" field in the mutation.
+func (m *SumDBHashMutation) Hash() (r []byte, exists bool) {
+	v := m.hash
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldHash returns the old "hash" field's value of the SumDBHash entity.
+// If the SumDBHash object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *SumDBHashMutation) OldHash(ctx context.Context) (v []byte, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldHash is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldHash requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldHash: %w", err)
+	}
+	return oldValue.Hash, nil
+}
+
+// ResetHash resets all changes to the "hash" field.
+func (m *SumDBHashMutation) ResetHash() {
+	m.hash = nil
+}
+
+// SetTreeID sets the "tree" edge to the SumDBTree entity by id.
+func (m *SumDBHashMutation) SetTreeID(id int) {
+	m.tree = &id
+}
+
+// ClearTree clears the "tree" edge to the SumDBTree entity.
+func (m *SumDBHashMutation) ClearTree() {
+	m.clearedtree = true
+}
+
+// TreeCleared reports if the "tree" edge to the SumDBTree entity was cleared.
+func (m *SumDBHashMutation) TreeCleared() bool {
+	return m.clearedtree
+}
+
+// TreeID returns the "tree" edge ID in the mutation.
+func (m *SumDBHashMutation) TreeID() (id int, exists bool) {
+	if m.tree != nil {
+		return *m.tree, true
+	}
+	return
+}
+
+// TreeIDs returns the "tree" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// TreeID instead. It exists only for internal usage by the builders.
+func (m *SumDBHashMutation) TreeIDs() (ids []int) {
+	if id := m.tree; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetTree resets all changes to the "tree" edge.
+func (m *SumDBHashMutation) ResetTree() {
+	m.tree = nil
+	m.clearedtree = false
+}
+
+// Where appends a list predicates to the SumDBHashMutation builder.
+func (m *SumDBHashMutation) Where(ps ...predicate.SumDBHash) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the SumDBHashMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *SumDBHashMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.SumDBHash, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *SumDBHashMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *SumDBHashMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (SumDBHash).
+func (m *SumDBHashMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *SumDBHashMutation) Fields() []string {
+	fields := make([]string, 0, 4)
+	if m.created_at != nil {
+		fields = append(fields, sumdbhash.FieldCreatedAt)
+	}
+	if m.updated_at != nil {
+		fields = append(fields, sumdbhash.FieldUpdatedAt)
+	}
+	if m.index != nil {
+		fields = append(fields, sumdbhash.FieldIndex)
+	}
+	if m.hash != nil {
+		fields = append(fields, sumdbhash.FieldHash)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *SumDBHashMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case sumdbhash.FieldCreatedAt:
+		return m.CreatedAt()
+	case sumdbhash.FieldUpdatedAt:
+		return m.UpdatedAt()
+	case sumdbhash.FieldIndex:
+		return m.Index()
+	case sumdbhash.FieldHash:
+		return m.Hash()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *SumDBHashMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case sumdbhash.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case sumdbhash.FieldUpdatedAt:
+		return m.OldUpdatedAt(ctx)
+	case sumdbhash.FieldIndex:
+		return m.OldIndex(ctx)
+	case sumdbhash.FieldHash:
+		return m.OldHash(ctx)
+	}
+	return nil, fmt.Errorf("unknown SumDBHash field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *SumDBHashMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case sumdbhash.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case sumdbhash.FieldUpdatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdatedAt(v)
+		return nil
+	case sumdbhash.FieldIndex:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetIndex(v)
+		return nil
+	case sumdbhash.FieldHash:
+		v, ok := value.([]byte)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetHash(v)
+		return nil
+	}
+	return fmt.Errorf("unknown SumDBHash field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *SumDBHashMutation) AddedFields() []string {
+	var fields []string
+	if m.addindex != nil {
+		fields = append(fields, sumdbhash.FieldIndex)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *SumDBHashMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case sumdbhash.FieldIndex:
+		return m.AddedIndex()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *SumDBHashMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case sumdbhash.FieldIndex:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddIndex(v)
+		return nil
+	}
+	return fmt.Errorf("unknown SumDBHash numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *SumDBHashMutation) ClearedFields() []string {
+	return nil
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *SumDBHashMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *SumDBHashMutation) ClearField(name string) error {
+	return fmt.Errorf("unknown SumDBHash nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *SumDBHashMutation) ResetField(name string) error {
+	switch name {
+	case sumdbhash.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case sumdbhash.FieldUpdatedAt:
+		m.ResetUpdatedAt()
+		return nil
+	case sumdbhash.FieldIndex:
+		m.ResetIndex()
+		return nil
+	case sumdbhash.FieldHash:
+		m.ResetHash()
+		return nil
+	}
+	return fmt.Errorf("unknown SumDBHash field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *SumDBHashMutation) AddedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.tree != nil {
+		edges = append(edges, sumdbhash.EdgeTree)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *SumDBHashMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case sumdbhash.EdgeTree:
+		if id := m.tree; id != nil {
+			return []ent.Value{*id}
+		}
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *SumDBHashMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 1)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *SumDBHashMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *SumDBHashMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.clearedtree {
+		edges = append(edges, sumdbhash.EdgeTree)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *SumDBHashMutation) EdgeCleared(name string) bool {
+	switch name {
+	case sumdbhash.EdgeTree:
+		return m.clearedtree
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *SumDBHashMutation) ClearEdge(name string) error {
+	switch name {
+	case sumdbhash.EdgeTree:
+		m.ClearTree()
+		return nil
+	}
+	return fmt.Errorf("unknown SumDBHash unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *SumDBHashMutation) ResetEdge(name string) error {
+	switch name {
+	case sumdbhash.EdgeTree:
+		m.ResetTree()
+		return nil
+	}
+	return fmt.Errorf("unknown SumDBHash edge %s", name)
+}
+
+// SumDBRecordMutation represents an operation that mutates the SumDBRecord nodes in the graph.
+type SumDBRecordMutation struct {
+	config
+	op            Op
+	typ           string
+	id            *int
+	created_at    *time.Time
+	updated_at    *time.Time
+	_path         *string
+	version       *string
+	data          *[]byte
+	clearedFields map[string]struct{}
+	tree          *int
+	clearedtree   bool
+	done          bool
+	oldValue      func(context.Context) (*SumDBRecord, error)
+	predicates    []predicate.SumDBRecord
+}
+
+var _ ent.Mutation = (*SumDBRecordMutation)(nil)
+
+// sumdbrecordOption allows management of the mutation configuration using functional options.
+type sumdbrecordOption func(*SumDBRecordMutation)
+
+// newSumDBRecordMutation creates new mutation for the SumDBRecord entity.
+func newSumDBRecordMutation(c config, op Op, opts ...sumdbrecordOption) *SumDBRecordMutation {
+	m := &SumDBRecordMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeSumDBRecord,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withSumDBRecordID sets the ID field of the mutation.
+func withSumDBRecordID(id int) sumdbrecordOption {
+	return func(m *SumDBRecordMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *SumDBRecord
+		)
+		m.oldValue = func(ctx context.Context) (*SumDBRecord, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().SumDBRecord.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withSumDBRecord sets the old SumDBRecord of the mutation.
+func withSumDBRecord(node *SumDBRecord) sumdbrecordOption {
+	return func(m *SumDBRecordMutation) {
+		m.oldValue = func(context.Context) (*SumDBRecord, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m SumDBRecordMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m SumDBRecordMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *SumDBRecordMutation) ID() (id int, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *SumDBRecordMutation) IDs(ctx context.Context) ([]int, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().SumDBRecord.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *SumDBRecordMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *SumDBRecordMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the SumDBRecord entity.
+// If the SumDBRecord object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *SumDBRecordMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *SumDBRecordMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (m *SumDBRecordMutation) SetUpdatedAt(t time.Time) {
+	m.updated_at = &t
+}
+
+// UpdatedAt returns the value of the "updated_at" field in the mutation.
+func (m *SumDBRecordMutation) UpdatedAt() (r time.Time, exists bool) {
+	v := m.updated_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdatedAt returns the old "updated_at" field's value of the SumDBRecord entity.
+// If the SumDBRecord object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *SumDBRecordMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdatedAt: %w", err)
+	}
+	return oldValue.UpdatedAt, nil
+}
+
+// ResetUpdatedAt resets all changes to the "updated_at" field.
+func (m *SumDBRecordMutation) ResetUpdatedAt() {
+	m.updated_at = nil
+}
+
+// SetPath sets the "path" field.
+func (m *SumDBRecordMutation) SetPath(s string) {
+	m._path = &s
+}
+
+// Path returns the value of the "path" field in the mutation.
+func (m *SumDBRecordMutation) Path() (r string, exists bool) {
+	v := m._path
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldPath returns the old "path" field's value of the SumDBRecord entity.
+// If the SumDBRecord object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *SumDBRecordMutation) OldPath(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldPath is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldPath requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldPath: %w", err)
+	}
+	return oldValue.Path, nil
+}
+
+// ResetPath resets all changes to the "path" field.
+func (m *SumDBRecordMutation) ResetPath() {
+	m._path = nil
+}
+
+// SetVersion sets the "version" field.
+func (m *SumDBRecordMutation) SetVersion(s string) {
+	m.version = &s
+}
+
+// Version returns the value of the "version" field in the mutation.
+func (m *SumDBRecordMutation) Version() (r string, exists bool) {
+	v := m.version
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldVersion returns the old "version" field's value of the SumDBRecord entity.
+// If the SumDBRecord object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *SumDBRecordMutation) OldVersion(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldVersion is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldVersion requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldVersion: %w", err)
+	}
+	return oldValue.Version, nil
+}
+
+// ResetVersion resets all changes to the "version" field.
+func (m *SumDBRecordMutation) ResetVersion() {
+	m.version = nil
+}
+
+// SetData sets the "data" field.
+func (m *SumDBRecordMutation) SetData(b []byte) {
+	m.data = &b
+}
+
+// Data returns the value of the "data" field in the mutation.
+func (m *SumDBRecordMutation) Data() (r []byte, exists bool) {
+	v := m.data
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldData returns the old "data" field's value of the SumDBRecord entity.
+// If the SumDBRecord object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *SumDBRecordMutation) OldData(ctx context.Context) (v []byte, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldData is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldData requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldData: %w", err)
+	}
+	return oldValue.Data, nil
+}
+
+// ResetData resets all changes to the "data" field.
+func (m *SumDBRecordMutation) ResetData() {
+	m.data = nil
+}
+
+// SetTreeID sets the "tree" edge to the SumDBTree entity by id.
+func (m *SumDBRecordMutation) SetTreeID(id int) {
+	m.tree = &id
+}
+
+// ClearTree clears the "tree" edge to the SumDBTree entity.
+func (m *SumDBRecordMutation) ClearTree() {
+	m.clearedtree = true
+}
+
+// TreeCleared reports if the "tree" edge to the SumDBTree entity was cleared.
+func (m *SumDBRecordMutation) TreeCleared() bool {
+	return m.clearedtree
+}
+
+// TreeID returns the "tree" edge ID in the mutation.
+func (m *SumDBRecordMutation) TreeID() (id int, exists bool) {
+	if m.tree != nil {
+		return *m.tree, true
+	}
+	return
+}
+
+// TreeIDs returns the "tree" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// TreeID instead. It exists only for internal usage by the builders.
+func (m *SumDBRecordMutation) TreeIDs() (ids []int) {
+	if id := m.tree; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetTree resets all changes to the "tree" edge.
+func (m *SumDBRecordMutation) ResetTree() {
+	m.tree = nil
+	m.clearedtree = false
+}
+
+// Where appends a list predicates to the SumDBRecordMutation builder.
+func (m *SumDBRecordMutation) Where(ps ...predicate.SumDBRecord) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the SumDBRecordMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *SumDBRecordMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.SumDBRecord, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *SumDBRecordMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *SumDBRecordMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (SumDBRecord).
+func (m *SumDBRecordMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *SumDBRecordMutation) Fields() []string {
+	fields := make([]string, 0, 5)
+	if m.created_at != nil {
+		fields = append(fields, sumdbrecord.FieldCreatedAt)
+	}
+	if m.updated_at != nil {
+		fields = append(fields, sumdbrecord.FieldUpdatedAt)
+	}
+	if m._path != nil {
+		fields = append(fields, sumdbrecord.FieldPath)
+	}
+	if m.version != nil {
+		fields = append(fields, sumdbrecord.FieldVersion)
+	}
+	if m.data != nil {
+		fields = append(fields, sumdbrecord.FieldData)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *SumDBRecordMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case sumdbrecord.FieldCreatedAt:
+		return m.CreatedAt()
+	case sumdbrecord.FieldUpdatedAt:
+		return m.UpdatedAt()
+	case sumdbrecord.FieldPath:
+		return m.Path()
+	case sumdbrecord.FieldVersion:
+		return m.Version()
+	case sumdbrecord.FieldData:
+		return m.Data()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *SumDBRecordMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case sumdbrecord.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case sumdbrecord.FieldUpdatedAt:
+		return m.OldUpdatedAt(ctx)
+	case sumdbrecord.FieldPath:
+		return m.OldPath(ctx)
+	case sumdbrecord.FieldVersion:
+		return m.OldVersion(ctx)
+	case sumdbrecord.FieldData:
+		return m.OldData(ctx)
+	}
+	return nil, fmt.Errorf("unknown SumDBRecord field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *SumDBRecordMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case sumdbrecord.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case sumdbrecord.FieldUpdatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdatedAt(v)
+		return nil
+	case sumdbrecord.FieldPath:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetPath(v)
+		return nil
+	case sumdbrecord.FieldVersion:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetVersion(v)
+		return nil
+	case sumdbrecord.FieldData:
+		v, ok := value.([]byte)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetData(v)
+		return nil
+	}
+	return fmt.Errorf("unknown SumDBRecord field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *SumDBRecordMutation) AddedFields() []string {
+	return nil
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *SumDBRecordMutation) AddedField(name string) (ent.Value, bool) {
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *SumDBRecordMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown SumDBRecord numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *SumDBRecordMutation) ClearedFields() []string {
+	return nil
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *SumDBRecordMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *SumDBRecordMutation) ClearField(name string) error {
+	return fmt.Errorf("unknown SumDBRecord nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *SumDBRecordMutation) ResetField(name string) error {
+	switch name {
+	case sumdbrecord.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case sumdbrecord.FieldUpdatedAt:
+		m.ResetUpdatedAt()
+		return nil
+	case sumdbrecord.FieldPath:
+		m.ResetPath()
+		return nil
+	case sumdbrecord.FieldVersion:
+		m.ResetVersion()
+		return nil
+	case sumdbrecord.FieldData:
+		m.ResetData()
+		return nil
+	}
+	return fmt.Errorf("unknown SumDBRecord field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *SumDBRecordMutation) AddedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.tree != nil {
+		edges = append(edges, sumdbrecord.EdgeTree)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *SumDBRecordMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case sumdbrecord.EdgeTree:
+		if id := m.tree; id != nil {
+			return []ent.Value{*id}
+		}
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *SumDBRecordMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 1)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *SumDBRecordMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *SumDBRecordMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.clearedtree {
+		edges = append(edges, sumdbrecord.EdgeTree)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *SumDBRecordMutation) EdgeCleared(name string) bool {
+	switch name {
+	case sumdbrecord.EdgeTree:
+		return m.clearedtree
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *SumDBRecordMutation) ClearEdge(name string) error {
+	switch name {
+	case sumdbrecord.EdgeTree:
+		m.ClearTree()
+		return nil
+	}
+	return fmt.Errorf("unknown SumDBRecord unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *SumDBRecordMutation) ResetEdge(name string) error {
+	switch name {
+	case sumdbrecord.EdgeTree:
+		m.ResetTree()
+		return nil
+	}
+	return fmt.Errorf("unknown SumDBRecord edge %s", name)
+}
+
+// SumDBTreeMutation represents an operation that mutates the SumDBTree nodes in the graph.
+type SumDBTreeMutation struct {
+	config
+	op             Op
+	typ            string
+	id             *int
+	created_at     *time.Time
+	updated_at     *time.Time
+	name           *string
+	signer_key     *crypto.Secret
+	verifier_key   *string
+	clearedFields  map[string]struct{}
+	hashes         map[int]struct{}
+	removedhashes  map[int]struct{}
+	clearedhashes  bool
+	records        map[int]struct{}
+	removedrecords map[int]struct{}
+	clearedrecords bool
+	done           bool
+	oldValue       func(context.Context) (*SumDBTree, error)
+	predicates     []predicate.SumDBTree
+}
+
+var _ ent.Mutation = (*SumDBTreeMutation)(nil)
+
+// sumdbtreeOption allows management of the mutation configuration using functional options.
+type sumdbtreeOption func(*SumDBTreeMutation)
+
+// newSumDBTreeMutation creates new mutation for the SumDBTree entity.
+func newSumDBTreeMutation(c config, op Op, opts ...sumdbtreeOption) *SumDBTreeMutation {
+	m := &SumDBTreeMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeSumDBTree,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withSumDBTreeID sets the ID field of the mutation.
+func withSumDBTreeID(id int) sumdbtreeOption {
+	return func(m *SumDBTreeMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *SumDBTree
+		)
+		m.oldValue = func(ctx context.Context) (*SumDBTree, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().SumDBTree.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withSumDBTree sets the old SumDBTree of the mutation.
+func withSumDBTree(node *SumDBTree) sumdbtreeOption {
+	return func(m *SumDBTreeMutation) {
+		m.oldValue = func(context.Context) (*SumDBTree, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m SumDBTreeMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m SumDBTreeMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *SumDBTreeMutation) ID() (id int, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *SumDBTreeMutation) IDs(ctx context.Context) ([]int, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().SumDBTree.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *SumDBTreeMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *SumDBTreeMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the SumDBTree entity.
+// If the SumDBTree object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *SumDBTreeMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *SumDBTreeMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (m *SumDBTreeMutation) SetUpdatedAt(t time.Time) {
+	m.updated_at = &t
+}
+
+// UpdatedAt returns the value of the "updated_at" field in the mutation.
+func (m *SumDBTreeMutation) UpdatedAt() (r time.Time, exists bool) {
+	v := m.updated_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdatedAt returns the old "updated_at" field's value of the SumDBTree entity.
+// If the SumDBTree object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *SumDBTreeMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdatedAt: %w", err)
+	}
+	return oldValue.UpdatedAt, nil
+}
+
+// ResetUpdatedAt resets all changes to the "updated_at" field.
+func (m *SumDBTreeMutation) ResetUpdatedAt() {
+	m.updated_at = nil
+}
+
+// SetName sets the "name" field.
+func (m *SumDBTreeMutation) SetName(s string) {
+	m.name = &s
+}
+
+// Name returns the value of the "name" field in the mutation.
+func (m *SumDBTreeMutation) Name() (r string, exists bool) {
+	v := m.name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldName returns the old "name" field's value of the SumDBTree entity.
+// If the SumDBTree object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *SumDBTreeMutation) OldName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldName: %w", err)
+	}
+	return oldValue.Name, nil
+}
+
+// ResetName resets all changes to the "name" field.
+func (m *SumDBTreeMutation) ResetName() {
+	m.name = nil
+}
+
+// SetSignerKey sets the "signer_key" field.
+func (m *SumDBTreeMutation) SetSignerKey(c crypto.Secret) {
+	m.signer_key = &c
+}
+
+// SignerKey returns the value of the "signer_key" field in the mutation.
+func (m *SumDBTreeMutation) SignerKey() (r crypto.Secret, exists bool) {
+	v := m.signer_key
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSignerKey returns the old "signer_key" field's value of the SumDBTree entity.
+// If the SumDBTree object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *SumDBTreeMutation) OldSignerKey(ctx context.Context) (v crypto.Secret, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSignerKey is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSignerKey requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSignerKey: %w", err)
+	}
+	return oldValue.SignerKey, nil
+}
+
+// ResetSignerKey resets all changes to the "signer_key" field.
+func (m *SumDBTreeMutation) ResetSignerKey() {
+	m.signer_key = nil
+}
+
+// SetVerifierKey sets the "verifier_key" field.
+func (m *SumDBTreeMutation) SetVerifierKey(s string) {
+	m.verifier_key = &s
+}
+
+// VerifierKey returns the value of the "verifier_key" field in the mutation.
+func (m *SumDBTreeMutation) VerifierKey() (r string, exists bool) {
+	v := m.verifier_key
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldVerifierKey returns the old "verifier_key" field's value of the SumDBTree entity.
+// If the SumDBTree object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *SumDBTreeMutation) OldVerifierKey(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldVerifierKey is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldVerifierKey requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldVerifierKey: %w", err)
+	}
+	return oldValue.VerifierKey, nil
+}
+
+// ResetVerifierKey resets all changes to the "verifier_key" field.
+func (m *SumDBTreeMutation) ResetVerifierKey() {
+	m.verifier_key = nil
+}
+
+// AddHashIDs adds the "hashes" edge to the SumDBHash entity by ids.
+func (m *SumDBTreeMutation) AddHashIDs(ids ...int) {
+	if m.hashes == nil {
+		m.hashes = make(map[int]struct{})
+	}
+	for i := range ids {
+		m.hashes[ids[i]] = struct{}{}
+	}
+}
+
+// ClearHashes clears the "hashes" edge to the SumDBHash entity.
+func (m *SumDBTreeMutation) ClearHashes() {
+	m.clearedhashes = true
+}
+
+// HashesCleared reports if the "hashes" edge to the SumDBHash entity was cleared.
+func (m *SumDBTreeMutation) HashesCleared() bool {
+	return m.clearedhashes
+}
+
+// RemoveHashIDs removes the "hashes" edge to the SumDBHash entity by IDs.
+func (m *SumDBTreeMutation) RemoveHashIDs(ids ...int) {
+	if m.removedhashes == nil {
+		m.removedhashes = make(map[int]struct{})
+	}
+	for i := range ids {
+		delete(m.hashes, ids[i])
+		m.removedhashes[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedHashes returns the removed IDs of the "hashes" edge to the SumDBHash entity.
+func (m *SumDBTreeMutation) RemovedHashesIDs() (ids []int) {
+	for id := range m.removedhashes {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// HashesIDs returns the "hashes" edge IDs in the mutation.
+func (m *SumDBTreeMutation) HashesIDs() (ids []int) {
+	for id := range m.hashes {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetHashes resets all changes to the "hashes" edge.
+func (m *SumDBTreeMutation) ResetHashes() {
+	m.hashes = nil
+	m.clearedhashes = false
+	m.removedhashes = nil
+}
+
+// AddRecordIDs adds the "records" edge to the SumDBRecord entity by ids.
+func (m *SumDBTreeMutation) AddRecordIDs(ids ...int) {
+	if m.records == nil {
+		m.records = make(map[int]struct{})
+	}
+	for i := range ids {
+		m.records[ids[i]] = struct{}{}
+	}
+}
+
+// ClearRecords clears the "records" edge to the SumDBRecord entity.
+func (m *SumDBTreeMutation) ClearRecords() {
+	m.clearedrecords = true
+}
+
+// RecordsCleared reports if the "records" edge to the SumDBRecord entity was cleared.
+func (m *SumDBTreeMutation) RecordsCleared() bool {
+	return m.clearedrecords
+}
+
+// RemoveRecordIDs removes the "records" edge to the SumDBRecord entity by IDs.
+func (m *SumDBTreeMutation) RemoveRecordIDs(ids ...int) {
+	if m.removedrecords == nil {
+		m.removedrecords = make(map[int]struct{})
+	}
+	for i := range ids {
+		delete(m.records, ids[i])
+		m.removedrecords[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedRecords returns the removed IDs of the "records" edge to the SumDBRecord entity.
+func (m *SumDBTreeMutation) RemovedRecordsIDs() (ids []int) {
+	for id := range m.removedrecords {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// RecordsIDs returns the "records" edge IDs in the mutation.
+func (m *SumDBTreeMutation) RecordsIDs() (ids []int) {
+	for id := range m.records {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetRecords resets all changes to the "records" edge.
+func (m *SumDBTreeMutation) ResetRecords() {
+	m.records = nil
+	m.clearedrecords = false
+	m.removedrecords = nil
+}
+
+// Where appends a list predicates to the SumDBTreeMutation builder.
+func (m *SumDBTreeMutation) Where(ps ...predicate.SumDBTree) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the SumDBTreeMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *SumDBTreeMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.SumDBTree, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *SumDBTreeMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *SumDBTreeMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (SumDBTree).
+func (m *SumDBTreeMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *SumDBTreeMutation) Fields() []string {
+	fields := make([]string, 0, 5)
+	if m.created_at != nil {
+		fields = append(fields, sumdbtree.FieldCreatedAt)
+	}
+	if m.updated_at != nil {
+		fields = append(fields, sumdbtree.FieldUpdatedAt)
+	}
+	if m.name != nil {
+		fields = append(fields, sumdbtree.FieldName)
+	}
+	if m.signer_key != nil {
+		fields = append(fields, sumdbtree.FieldSignerKey)
+	}
+	if m.verifier_key != nil {
+		fields = append(fields, sumdbtree.FieldVerifierKey)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *SumDBTreeMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case sumdbtree.FieldCreatedAt:
+		return m.CreatedAt()
+	case sumdbtree.FieldUpdatedAt:
+		return m.UpdatedAt()
+	case sumdbtree.FieldName:
+		return m.Name()
+	case sumdbtree.FieldSignerKey:
+		return m.SignerKey()
+	case sumdbtree.FieldVerifierKey:
+		return m.VerifierKey()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *SumDBTreeMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case sumdbtree.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case sumdbtree.FieldUpdatedAt:
+		return m.OldUpdatedAt(ctx)
+	case sumdbtree.FieldName:
+		return m.OldName(ctx)
+	case sumdbtree.FieldSignerKey:
+		return m.OldSignerKey(ctx)
+	case sumdbtree.FieldVerifierKey:
+		return m.OldVerifierKey(ctx)
+	}
+	return nil, fmt.Errorf("unknown SumDBTree field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *SumDBTreeMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case sumdbtree.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case sumdbtree.FieldUpdatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdatedAt(v)
+		return nil
+	case sumdbtree.FieldName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetName(v)
+		return nil
+	case sumdbtree.FieldSignerKey:
+		v, ok := value.(crypto.Secret)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSignerKey(v)
+		return nil
+	case sumdbtree.FieldVerifierKey:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetVerifierKey(v)
+		return nil
+	}
+	return fmt.Errorf("unknown SumDBTree field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *SumDBTreeMutation) AddedFields() []string {
+	return nil
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *SumDBTreeMutation) AddedField(name string) (ent.Value, bool) {
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *SumDBTreeMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown SumDBTree numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *SumDBTreeMutation) ClearedFields() []string {
+	return nil
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *SumDBTreeMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *SumDBTreeMutation) ClearField(name string) error {
+	return fmt.Errorf("unknown SumDBTree nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *SumDBTreeMutation) ResetField(name string) error {
+	switch name {
+	case sumdbtree.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case sumdbtree.FieldUpdatedAt:
+		m.ResetUpdatedAt()
+		return nil
+	case sumdbtree.FieldName:
+		m.ResetName()
+		return nil
+	case sumdbtree.FieldSignerKey:
+		m.ResetSignerKey()
+		return nil
+	case sumdbtree.FieldVerifierKey:
+		m.ResetVerifierKey()
+		return nil
+	}
+	return fmt.Errorf("unknown SumDBTree field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *SumDBTreeMutation) AddedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.hashes != nil {
+		edges = append(edges, sumdbtree.EdgeHashes)
+	}
+	if m.records != nil {
+		edges = append(edges, sumdbtree.EdgeRecords)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *SumDBTreeMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case sumdbtree.EdgeHashes:
+		ids := make([]ent.Value, 0, len(m.hashes))
+		for id := range m.hashes {
+			ids = append(ids, id)
+		}
+		return ids
+	case sumdbtree.EdgeRecords:
+		ids := make([]ent.Value, 0, len(m.records))
+		for id := range m.records {
+			ids = append(ids, id)
+		}
+		return ids
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *SumDBTreeMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.removedhashes != nil {
+		edges = append(edges, sumdbtree.EdgeHashes)
+	}
+	if m.removedrecords != nil {
+		edges = append(edges, sumdbtree.EdgeRecords)
+	}
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *SumDBTreeMutation) RemovedIDs(name string) []ent.Value {
+	switch name {
+	case sumdbtree.EdgeHashes:
+		ids := make([]ent.Value, 0, len(m.removedhashes))
+		for id := range m.removedhashes {
+			ids = append(ids, id)
+		}
+		return ids
+	case sumdbtree.EdgeRecords:
+		ids := make([]ent.Value, 0, len(m.removedrecords))
+		for id := range m.removedrecords {
+			ids = append(ids, id)
+		}
+		return ids
+	}
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *SumDBTreeMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.clearedhashes {
+		edges = append(edges, sumdbtree.EdgeHashes)
+	}
+	if m.clearedrecords {
+		edges = append(edges, sumdbtree.EdgeRecords)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *SumDBTreeMutation) EdgeCleared(name string) bool {
+	switch name {
+	case sumdbtree.EdgeHashes:
+		return m.clearedhashes
+	case sumdbtree.EdgeRecords:
+		return m.clearedrecords
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *SumDBTreeMutation) ClearEdge(name string) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown SumDBTree unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *SumDBTreeMutation) ResetEdge(name string) error {
+	switch name {
+	case sumdbtree.EdgeHashes:
+		m.ResetHashes()
+		return nil
+	case sumdbtree.EdgeRecords:
+		m.ResetRecords()
+		return nil
+	}
+	return fmt.Errorf("unknown SumDBTree edge %s", name)
 }

@@ -16,6 +16,12 @@ type Tx struct {
 	Artifact *ArtifactClient
 	// ArtifactVersion is the client for interacting with the ArtifactVersion builders.
 	ArtifactVersion *ArtifactVersionClient
+	// SumDBHash is the client for interacting with the SumDBHash builders.
+	SumDBHash *SumDBHashClient
+	// SumDBRecord is the client for interacting with the SumDBRecord builders.
+	SumDBRecord *SumDBRecordClient
+	// SumDBTree is the client for interacting with the SumDBTree builders.
+	SumDBTree *SumDBTreeClient
 
 	// lazily loaded.
 	client     *Client
@@ -149,6 +155,9 @@ func (tx *Tx) Client() *Client {
 func (tx *Tx) init() {
 	tx.Artifact = NewArtifactClient(tx.config)
 	tx.ArtifactVersion = NewArtifactVersionClient(tx.config)
+	tx.SumDBHash = NewSumDBHashClient(tx.config)
+	tx.SumDBRecord = NewSumDBRecordClient(tx.config)
+	tx.SumDBTree = NewSumDBTreeClient(tx.config)
 }
 
 // txDriver wraps the given dialect.Tx with a nop dialect.Driver implementation.

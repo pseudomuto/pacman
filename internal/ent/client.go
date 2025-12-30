@@ -17,6 +17,9 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/pseudomuto/pacman/internal/ent/artifact"
 	"github.com/pseudomuto/pacman/internal/ent/artifactversion"
+	"github.com/pseudomuto/pacman/internal/ent/sumdbhash"
+	"github.com/pseudomuto/pacman/internal/ent/sumdbrecord"
+	"github.com/pseudomuto/pacman/internal/ent/sumdbtree"
 )
 
 // Client is the client that holds all ent builders.
@@ -28,6 +31,12 @@ type Client struct {
 	Artifact *ArtifactClient
 	// ArtifactVersion is the client for interacting with the ArtifactVersion builders.
 	ArtifactVersion *ArtifactVersionClient
+	// SumDBHash is the client for interacting with the SumDBHash builders.
+	SumDBHash *SumDBHashClient
+	// SumDBRecord is the client for interacting with the SumDBRecord builders.
+	SumDBRecord *SumDBRecordClient
+	// SumDBTree is the client for interacting with the SumDBTree builders.
+	SumDBTree *SumDBTreeClient
 }
 
 // NewClient creates a new client configured with the given options.
@@ -41,6 +50,9 @@ func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
 	c.Artifact = NewArtifactClient(c.config)
 	c.ArtifactVersion = NewArtifactVersionClient(c.config)
+	c.SumDBHash = NewSumDBHashClient(c.config)
+	c.SumDBRecord = NewSumDBRecordClient(c.config)
+	c.SumDBTree = NewSumDBTreeClient(c.config)
 }
 
 type (
@@ -135,6 +147,9 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		config:          cfg,
 		Artifact:        NewArtifactClient(cfg),
 		ArtifactVersion: NewArtifactVersionClient(cfg),
+		SumDBHash:       NewSumDBHashClient(cfg),
+		SumDBRecord:     NewSumDBRecordClient(cfg),
+		SumDBTree:       NewSumDBTreeClient(cfg),
 	}, nil
 }
 
@@ -156,6 +171,9 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		config:          cfg,
 		Artifact:        NewArtifactClient(cfg),
 		ArtifactVersion: NewArtifactVersionClient(cfg),
+		SumDBHash:       NewSumDBHashClient(cfg),
+		SumDBRecord:     NewSumDBRecordClient(cfg),
+		SumDBTree:       NewSumDBTreeClient(cfg),
 	}, nil
 }
 
@@ -186,6 +204,9 @@ func (c *Client) Close() error {
 func (c *Client) Use(hooks ...Hook) {
 	c.Artifact.Use(hooks...)
 	c.ArtifactVersion.Use(hooks...)
+	c.SumDBHash.Use(hooks...)
+	c.SumDBRecord.Use(hooks...)
+	c.SumDBTree.Use(hooks...)
 }
 
 // Intercept adds the query interceptors to all the entity clients.
@@ -193,6 +214,9 @@ func (c *Client) Use(hooks ...Hook) {
 func (c *Client) Intercept(interceptors ...Interceptor) {
 	c.Artifact.Intercept(interceptors...)
 	c.ArtifactVersion.Intercept(interceptors...)
+	c.SumDBHash.Intercept(interceptors...)
+	c.SumDBRecord.Intercept(interceptors...)
+	c.SumDBTree.Intercept(interceptors...)
 }
 
 // Mutate implements the ent.Mutator interface.
@@ -202,6 +226,12 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.Artifact.mutate(ctx, m)
 	case *ArtifactVersionMutation:
 		return c.ArtifactVersion.mutate(ctx, m)
+	case *SumDBHashMutation:
+		return c.SumDBHash.mutate(ctx, m)
+	case *SumDBRecordMutation:
+		return c.SumDBRecord.mutate(ctx, m)
+	case *SumDBTreeMutation:
+		return c.SumDBTree.mutate(ctx, m)
 	default:
 		return nil, fmt.Errorf("ent: unknown mutation type %T", m)
 	}
@@ -505,12 +535,475 @@ func (c *ArtifactVersionClient) mutate(ctx context.Context, m *ArtifactVersionMu
 	}
 }
 
+// SumDBHashClient is a client for the SumDBHash schema.
+type SumDBHashClient struct {
+	config
+}
+
+// NewSumDBHashClient returns a client for the SumDBHash from the given config.
+func NewSumDBHashClient(c config) *SumDBHashClient {
+	return &SumDBHashClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `sumdbhash.Hooks(f(g(h())))`.
+func (c *SumDBHashClient) Use(hooks ...Hook) {
+	c.hooks.SumDBHash = append(c.hooks.SumDBHash, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `sumdbhash.Intercept(f(g(h())))`.
+func (c *SumDBHashClient) Intercept(interceptors ...Interceptor) {
+	c.inters.SumDBHash = append(c.inters.SumDBHash, interceptors...)
+}
+
+// Create returns a builder for creating a SumDBHash entity.
+func (c *SumDBHashClient) Create() *SumDBHashCreate {
+	mutation := newSumDBHashMutation(c.config, OpCreate)
+	return &SumDBHashCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of SumDBHash entities.
+func (c *SumDBHashClient) CreateBulk(builders ...*SumDBHashCreate) *SumDBHashCreateBulk {
+	return &SumDBHashCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *SumDBHashClient) MapCreateBulk(slice any, setFunc func(*SumDBHashCreate, int)) *SumDBHashCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &SumDBHashCreateBulk{err: fmt.Errorf("calling to SumDBHashClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*SumDBHashCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &SumDBHashCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for SumDBHash.
+func (c *SumDBHashClient) Update() *SumDBHashUpdate {
+	mutation := newSumDBHashMutation(c.config, OpUpdate)
+	return &SumDBHashUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *SumDBHashClient) UpdateOne(_m *SumDBHash) *SumDBHashUpdateOne {
+	mutation := newSumDBHashMutation(c.config, OpUpdateOne, withSumDBHash(_m))
+	return &SumDBHashUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *SumDBHashClient) UpdateOneID(id int) *SumDBHashUpdateOne {
+	mutation := newSumDBHashMutation(c.config, OpUpdateOne, withSumDBHashID(id))
+	return &SumDBHashUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for SumDBHash.
+func (c *SumDBHashClient) Delete() *SumDBHashDelete {
+	mutation := newSumDBHashMutation(c.config, OpDelete)
+	return &SumDBHashDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *SumDBHashClient) DeleteOne(_m *SumDBHash) *SumDBHashDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *SumDBHashClient) DeleteOneID(id int) *SumDBHashDeleteOne {
+	builder := c.Delete().Where(sumdbhash.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &SumDBHashDeleteOne{builder}
+}
+
+// Query returns a query builder for SumDBHash.
+func (c *SumDBHashClient) Query() *SumDBHashQuery {
+	return &SumDBHashQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeSumDBHash},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a SumDBHash entity by its id.
+func (c *SumDBHashClient) Get(ctx context.Context, id int) (*SumDBHash, error) {
+	return c.Query().Where(sumdbhash.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *SumDBHashClient) GetX(ctx context.Context, id int) *SumDBHash {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryTree queries the tree edge of a SumDBHash.
+func (c *SumDBHashClient) QueryTree(_m *SumDBHash) *SumDBTreeQuery {
+	query := (&SumDBTreeClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(sumdbhash.Table, sumdbhash.FieldID, id),
+			sqlgraph.To(sumdbtree.Table, sumdbtree.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, sumdbhash.TreeTable, sumdbhash.TreeColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *SumDBHashClient) Hooks() []Hook {
+	return c.hooks.SumDBHash
+}
+
+// Interceptors returns the client interceptors.
+func (c *SumDBHashClient) Interceptors() []Interceptor {
+	return c.inters.SumDBHash
+}
+
+func (c *SumDBHashClient) mutate(ctx context.Context, m *SumDBHashMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&SumDBHashCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&SumDBHashUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&SumDBHashUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&SumDBHashDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown SumDBHash mutation op: %q", m.Op())
+	}
+}
+
+// SumDBRecordClient is a client for the SumDBRecord schema.
+type SumDBRecordClient struct {
+	config
+}
+
+// NewSumDBRecordClient returns a client for the SumDBRecord from the given config.
+func NewSumDBRecordClient(c config) *SumDBRecordClient {
+	return &SumDBRecordClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `sumdbrecord.Hooks(f(g(h())))`.
+func (c *SumDBRecordClient) Use(hooks ...Hook) {
+	c.hooks.SumDBRecord = append(c.hooks.SumDBRecord, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `sumdbrecord.Intercept(f(g(h())))`.
+func (c *SumDBRecordClient) Intercept(interceptors ...Interceptor) {
+	c.inters.SumDBRecord = append(c.inters.SumDBRecord, interceptors...)
+}
+
+// Create returns a builder for creating a SumDBRecord entity.
+func (c *SumDBRecordClient) Create() *SumDBRecordCreate {
+	mutation := newSumDBRecordMutation(c.config, OpCreate)
+	return &SumDBRecordCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of SumDBRecord entities.
+func (c *SumDBRecordClient) CreateBulk(builders ...*SumDBRecordCreate) *SumDBRecordCreateBulk {
+	return &SumDBRecordCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *SumDBRecordClient) MapCreateBulk(slice any, setFunc func(*SumDBRecordCreate, int)) *SumDBRecordCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &SumDBRecordCreateBulk{err: fmt.Errorf("calling to SumDBRecordClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*SumDBRecordCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &SumDBRecordCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for SumDBRecord.
+func (c *SumDBRecordClient) Update() *SumDBRecordUpdate {
+	mutation := newSumDBRecordMutation(c.config, OpUpdate)
+	return &SumDBRecordUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *SumDBRecordClient) UpdateOne(_m *SumDBRecord) *SumDBRecordUpdateOne {
+	mutation := newSumDBRecordMutation(c.config, OpUpdateOne, withSumDBRecord(_m))
+	return &SumDBRecordUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *SumDBRecordClient) UpdateOneID(id int) *SumDBRecordUpdateOne {
+	mutation := newSumDBRecordMutation(c.config, OpUpdateOne, withSumDBRecordID(id))
+	return &SumDBRecordUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for SumDBRecord.
+func (c *SumDBRecordClient) Delete() *SumDBRecordDelete {
+	mutation := newSumDBRecordMutation(c.config, OpDelete)
+	return &SumDBRecordDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *SumDBRecordClient) DeleteOne(_m *SumDBRecord) *SumDBRecordDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *SumDBRecordClient) DeleteOneID(id int) *SumDBRecordDeleteOne {
+	builder := c.Delete().Where(sumdbrecord.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &SumDBRecordDeleteOne{builder}
+}
+
+// Query returns a query builder for SumDBRecord.
+func (c *SumDBRecordClient) Query() *SumDBRecordQuery {
+	return &SumDBRecordQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeSumDBRecord},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a SumDBRecord entity by its id.
+func (c *SumDBRecordClient) Get(ctx context.Context, id int) (*SumDBRecord, error) {
+	return c.Query().Where(sumdbrecord.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *SumDBRecordClient) GetX(ctx context.Context, id int) *SumDBRecord {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryTree queries the tree edge of a SumDBRecord.
+func (c *SumDBRecordClient) QueryTree(_m *SumDBRecord) *SumDBTreeQuery {
+	query := (&SumDBTreeClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(sumdbrecord.Table, sumdbrecord.FieldID, id),
+			sqlgraph.To(sumdbtree.Table, sumdbtree.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, sumdbrecord.TreeTable, sumdbrecord.TreeColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *SumDBRecordClient) Hooks() []Hook {
+	return c.hooks.SumDBRecord
+}
+
+// Interceptors returns the client interceptors.
+func (c *SumDBRecordClient) Interceptors() []Interceptor {
+	return c.inters.SumDBRecord
+}
+
+func (c *SumDBRecordClient) mutate(ctx context.Context, m *SumDBRecordMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&SumDBRecordCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&SumDBRecordUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&SumDBRecordUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&SumDBRecordDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown SumDBRecord mutation op: %q", m.Op())
+	}
+}
+
+// SumDBTreeClient is a client for the SumDBTree schema.
+type SumDBTreeClient struct {
+	config
+}
+
+// NewSumDBTreeClient returns a client for the SumDBTree from the given config.
+func NewSumDBTreeClient(c config) *SumDBTreeClient {
+	return &SumDBTreeClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `sumdbtree.Hooks(f(g(h())))`.
+func (c *SumDBTreeClient) Use(hooks ...Hook) {
+	c.hooks.SumDBTree = append(c.hooks.SumDBTree, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `sumdbtree.Intercept(f(g(h())))`.
+func (c *SumDBTreeClient) Intercept(interceptors ...Interceptor) {
+	c.inters.SumDBTree = append(c.inters.SumDBTree, interceptors...)
+}
+
+// Create returns a builder for creating a SumDBTree entity.
+func (c *SumDBTreeClient) Create() *SumDBTreeCreate {
+	mutation := newSumDBTreeMutation(c.config, OpCreate)
+	return &SumDBTreeCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of SumDBTree entities.
+func (c *SumDBTreeClient) CreateBulk(builders ...*SumDBTreeCreate) *SumDBTreeCreateBulk {
+	return &SumDBTreeCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *SumDBTreeClient) MapCreateBulk(slice any, setFunc func(*SumDBTreeCreate, int)) *SumDBTreeCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &SumDBTreeCreateBulk{err: fmt.Errorf("calling to SumDBTreeClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*SumDBTreeCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &SumDBTreeCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for SumDBTree.
+func (c *SumDBTreeClient) Update() *SumDBTreeUpdate {
+	mutation := newSumDBTreeMutation(c.config, OpUpdate)
+	return &SumDBTreeUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *SumDBTreeClient) UpdateOne(_m *SumDBTree) *SumDBTreeUpdateOne {
+	mutation := newSumDBTreeMutation(c.config, OpUpdateOne, withSumDBTree(_m))
+	return &SumDBTreeUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *SumDBTreeClient) UpdateOneID(id int) *SumDBTreeUpdateOne {
+	mutation := newSumDBTreeMutation(c.config, OpUpdateOne, withSumDBTreeID(id))
+	return &SumDBTreeUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for SumDBTree.
+func (c *SumDBTreeClient) Delete() *SumDBTreeDelete {
+	mutation := newSumDBTreeMutation(c.config, OpDelete)
+	return &SumDBTreeDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *SumDBTreeClient) DeleteOne(_m *SumDBTree) *SumDBTreeDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *SumDBTreeClient) DeleteOneID(id int) *SumDBTreeDeleteOne {
+	builder := c.Delete().Where(sumdbtree.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &SumDBTreeDeleteOne{builder}
+}
+
+// Query returns a query builder for SumDBTree.
+func (c *SumDBTreeClient) Query() *SumDBTreeQuery {
+	return &SumDBTreeQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeSumDBTree},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a SumDBTree entity by its id.
+func (c *SumDBTreeClient) Get(ctx context.Context, id int) (*SumDBTree, error) {
+	return c.Query().Where(sumdbtree.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *SumDBTreeClient) GetX(ctx context.Context, id int) *SumDBTree {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryHashes queries the hashes edge of a SumDBTree.
+func (c *SumDBTreeClient) QueryHashes(_m *SumDBTree) *SumDBHashQuery {
+	query := (&SumDBHashClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(sumdbtree.Table, sumdbtree.FieldID, id),
+			sqlgraph.To(sumdbhash.Table, sumdbhash.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, sumdbtree.HashesTable, sumdbtree.HashesColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryRecords queries the records edge of a SumDBTree.
+func (c *SumDBTreeClient) QueryRecords(_m *SumDBTree) *SumDBRecordQuery {
+	query := (&SumDBRecordClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(sumdbtree.Table, sumdbtree.FieldID, id),
+			sqlgraph.To(sumdbrecord.Table, sumdbrecord.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, sumdbtree.RecordsTable, sumdbtree.RecordsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *SumDBTreeClient) Hooks() []Hook {
+	return c.hooks.SumDBTree
+}
+
+// Interceptors returns the client interceptors.
+func (c *SumDBTreeClient) Interceptors() []Interceptor {
+	return c.inters.SumDBTree
+}
+
+func (c *SumDBTreeClient) mutate(ctx context.Context, m *SumDBTreeMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&SumDBTreeCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&SumDBTreeUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&SumDBTreeUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&SumDBTreeDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown SumDBTree mutation op: %q", m.Op())
+	}
+}
+
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		Artifact, ArtifactVersion []ent.Hook
+		Artifact, ArtifactVersion, SumDBHash, SumDBRecord, SumDBTree []ent.Hook
 	}
 	inters struct {
-		Artifact, ArtifactVersion []ent.Interceptor
+		Artifact, ArtifactVersion, SumDBHash, SumDBRecord, SumDBTree []ent.Interceptor
 	}
 )

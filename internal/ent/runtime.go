@@ -8,6 +8,9 @@ import (
 	"github.com/pseudomuto/pacman/internal/ent/artifact"
 	"github.com/pseudomuto/pacman/internal/ent/artifactversion"
 	"github.com/pseudomuto/pacman/internal/ent/schema"
+	"github.com/pseudomuto/pacman/internal/ent/sumdbhash"
+	"github.com/pseudomuto/pacman/internal/ent/sumdbrecord"
+	"github.com/pseudomuto/pacman/internal/ent/sumdbtree"
 )
 
 // The init function reads all schema descriptors with runtime code
@@ -48,4 +51,77 @@ func init() {
 	artifactversion.DefaultUpdatedAt = artifactversionDescUpdatedAt.Default.(func() time.Time)
 	// artifactversion.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	artifactversion.UpdateDefaultUpdatedAt = artifactversionDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// artifactversionDescVersion is the schema descriptor for version field.
+	artifactversionDescVersion := artifactversionFields[0].Descriptor()
+	// artifactversion.VersionValidator is a validator for the "version" field. It is called by the builders before save.
+	artifactversion.VersionValidator = artifactversionDescVersion.Validators[0].(func(string) error)
+	// artifactversionDescURI is the schema descriptor for uri field.
+	artifactversionDescURI := artifactversionFields[1].Descriptor()
+	// artifactversion.URIValidator is a validator for the "uri" field. It is called by the builders before save.
+	artifactversion.URIValidator = artifactversionDescURI.Validators[0].(func(string) error)
+	sumdbhashMixin := schema.SumDBHash{}.Mixin()
+	sumdbhashMixinFields0 := sumdbhashMixin[0].Fields()
+	_ = sumdbhashMixinFields0
+	sumdbhashFields := schema.SumDBHash{}.Fields()
+	_ = sumdbhashFields
+	// sumdbhashDescCreatedAt is the schema descriptor for created_at field.
+	sumdbhashDescCreatedAt := sumdbhashMixinFields0[0].Descriptor()
+	// sumdbhash.DefaultCreatedAt holds the default value on creation for the created_at field.
+	sumdbhash.DefaultCreatedAt = sumdbhashDescCreatedAt.Default.(func() time.Time)
+	// sumdbhashDescUpdatedAt is the schema descriptor for updated_at field.
+	sumdbhashDescUpdatedAt := sumdbhashMixinFields0[1].Descriptor()
+	// sumdbhash.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	sumdbhash.DefaultUpdatedAt = sumdbhashDescUpdatedAt.Default.(func() time.Time)
+	// sumdbhash.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	sumdbhash.UpdateDefaultUpdatedAt = sumdbhashDescUpdatedAt.UpdateDefault.(func() time.Time)
+	sumdbrecordMixin := schema.SumDBRecord{}.Mixin()
+	sumdbrecordMixinFields0 := sumdbrecordMixin[0].Fields()
+	_ = sumdbrecordMixinFields0
+	sumdbrecordFields := schema.SumDBRecord{}.Fields()
+	_ = sumdbrecordFields
+	// sumdbrecordDescCreatedAt is the schema descriptor for created_at field.
+	sumdbrecordDescCreatedAt := sumdbrecordMixinFields0[0].Descriptor()
+	// sumdbrecord.DefaultCreatedAt holds the default value on creation for the created_at field.
+	sumdbrecord.DefaultCreatedAt = sumdbrecordDescCreatedAt.Default.(func() time.Time)
+	// sumdbrecordDescUpdatedAt is the schema descriptor for updated_at field.
+	sumdbrecordDescUpdatedAt := sumdbrecordMixinFields0[1].Descriptor()
+	// sumdbrecord.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	sumdbrecord.DefaultUpdatedAt = sumdbrecordDescUpdatedAt.Default.(func() time.Time)
+	// sumdbrecord.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	sumdbrecord.UpdateDefaultUpdatedAt = sumdbrecordDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// sumdbrecordDescPath is the schema descriptor for path field.
+	sumdbrecordDescPath := sumdbrecordFields[0].Descriptor()
+	// sumdbrecord.PathValidator is a validator for the "path" field. It is called by the builders before save.
+	sumdbrecord.PathValidator = sumdbrecordDescPath.Validators[0].(func(string) error)
+	// sumdbrecordDescVersion is the schema descriptor for version field.
+	sumdbrecordDescVersion := sumdbrecordFields[1].Descriptor()
+	// sumdbrecord.VersionValidator is a validator for the "version" field. It is called by the builders before save.
+	sumdbrecord.VersionValidator = sumdbrecordDescVersion.Validators[0].(func(string) error)
+	sumdbtreeMixin := schema.SumDBTree{}.Mixin()
+	sumdbtreeMixinFields0 := sumdbtreeMixin[0].Fields()
+	_ = sumdbtreeMixinFields0
+	sumdbtreeFields := schema.SumDBTree{}.Fields()
+	_ = sumdbtreeFields
+	// sumdbtreeDescCreatedAt is the schema descriptor for created_at field.
+	sumdbtreeDescCreatedAt := sumdbtreeMixinFields0[0].Descriptor()
+	// sumdbtree.DefaultCreatedAt holds the default value on creation for the created_at field.
+	sumdbtree.DefaultCreatedAt = sumdbtreeDescCreatedAt.Default.(func() time.Time)
+	// sumdbtreeDescUpdatedAt is the schema descriptor for updated_at field.
+	sumdbtreeDescUpdatedAt := sumdbtreeMixinFields0[1].Descriptor()
+	// sumdbtree.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	sumdbtree.DefaultUpdatedAt = sumdbtreeDescUpdatedAt.Default.(func() time.Time)
+	// sumdbtree.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	sumdbtree.UpdateDefaultUpdatedAt = sumdbtreeDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// sumdbtreeDescName is the schema descriptor for name field.
+	sumdbtreeDescName := sumdbtreeFields[0].Descriptor()
+	// sumdbtree.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	sumdbtree.NameValidator = sumdbtreeDescName.Validators[0].(func(string) error)
+	// sumdbtreeDescSignerKey is the schema descriptor for signer_key field.
+	sumdbtreeDescSignerKey := sumdbtreeFields[1].Descriptor()
+	// sumdbtree.SignerKeyValidator is a validator for the "signer_key" field. It is called by the builders before save.
+	sumdbtree.SignerKeyValidator = sumdbtreeDescSignerKey.Validators[0].(func(string) error)
+	// sumdbtreeDescVerifierKey is the schema descriptor for verifier_key field.
+	sumdbtreeDescVerifierKey := sumdbtreeFields[2].Descriptor()
+	// sumdbtree.VerifierKeyValidator is a validator for the "verifier_key" field. It is called by the builders before save.
+	sumdbtree.VerifierKeyValidator = sumdbtreeDescVerifierKey.Validators[0].(func(string) error)
 }
