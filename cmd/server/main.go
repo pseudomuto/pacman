@@ -68,10 +68,6 @@ func main() {
 				storage.Module,
 				sumdb.Module,
 				fx.NopLogger,
-
-				fx.Invoke(func(dbs []*sumdb.SumDB) {
-					slog.Info("Registered sumdbs", "num", len(dbs))
-				}),
 			)
 
 			if err := app.Err(); err != nil {

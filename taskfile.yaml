@@ -5,9 +5,7 @@ tasks:
     desc: Updates all dependencies
     aliases: [up]
     silent: true
-    cmds:
-      - go mod tidy
-      - task ent:gen
+    cmd: go mod tidy
 
   server:
     desc: Run the API server
@@ -15,7 +13,9 @@ tasks:
 
   gen:
     desc: Generate Go code
-    cmd: go generate ./...
+    cmds:
+      - go generate ./...
+      - go tool ent generate ./internal/ent/schema --feature sql/upsert
 
   lint:
     desc: Run buf/golangci-lint on the codebase
@@ -37,14 +37,8 @@ tasks:
 
   test:ci:
     desc: Run the test suite for CI with coverage profile
-    deps: [update]
     silent: true
     cmd: go test -v -coverprofile=coverage.out ./...
-
-  ent:gen:
-    desc: Generate ent code
-    cmds:
-      - go tool ent generate ./internal/ent/schema --feature sql/upsert
 
   ent:sql:
     desc: Show the generated SQL for all entities

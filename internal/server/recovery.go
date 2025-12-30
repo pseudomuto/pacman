@@ -1,10 +1,12 @@
 package server
 
 import (
+	"errors"
 	"log/slog"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/pseudomuto/pacman/internal/api/common"
 )
 
 // recoveryMiddleware returns a gin middleware for panic recovery.
@@ -16,14 +18,10 @@ func recoveryMiddleware(logger *slog.Logger) gin.HandlerFunc {
 			"panic", recovered,
 		)
 
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Internal server error",
-		})
+		common.JSONError(
+			c,
+			http.StatusInternalServerError,
+			errors.New("internal server error"),
+		)
 	})
-}
-
-// createRecoveryMiddleware creates a recovery middleware function.
-// This is used by the server to add recovery with proper ordering.
-func createRecoveryMiddleware(logger *slog.Logger) gin.HandlerFunc {
-	return recoveryMiddleware(logger)
 }
