@@ -1,39 +1,23 @@
 openapi: 3.0.0
 info:
   version: 0.1.0
-  title: PacMan API
+  title: PacMan API - SumDB
+  description: SumDB transparency log management endpoints
 paths:
   /api/v1/sumdb/trees:
     get:
       summary: List available sumdb trees
-      operationId: getSumDBs
+      operationId: listTrees
       responses:
         "200":
           description: Success
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/SumDBTreeList"
-
-  /healthz:
-    get:
-      responses:
-        "200":
-          description: Health check response
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/HealthCheckResponse"
+                $ref: "#/components/schemas/TreeList"
 components:
   schemas:
-    HealthCheckResponse:
-      type: object
-      required: [status]
-      properties:
-        status:
-          type: string
-          example: OK
-    SumDBTree:
+    Tree:
       type: object
       additionalProperties: false
       required:
@@ -52,7 +36,7 @@ components:
         updatedAt:
           type: string
           format: date-time
-    SumDBTreeList:
+    TreeList:
       type: array
       items:
-        $ref: "#/components/schemas/SumDBTree"
+        $ref: "#/components/schemas/Tree"

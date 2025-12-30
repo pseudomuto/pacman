@@ -9,30 +9,22 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// HealthCheckResponse defines model for HealthCheckResponse.
-type HealthCheckResponse struct {
-	Status string `json:"status"`
-}
-
-// SumDBTree defines model for SumDBTree.
-type SumDBTree struct {
+// Tree defines model for Tree.
+type Tree struct {
 	CreatedAt   time.Time `json:"createdAt"`
 	Name        string    `json:"name"`
 	UpdatedAt   time.Time `json:"updatedAt"`
 	VerifierKey string    `json:"verifierKey"`
 }
 
-// SumDBTreeList defines model for SumDBTreeList.
-type SumDBTreeList = []SumDBTree
+// TreeList defines model for TreeList.
+type TreeList = []Tree
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
 	// List available sumdb trees
 	// (GET /api/v1/sumdb/trees)
-	GetSumDBs(c *gin.Context)
-
-	// (GET /healthz)
-	GetHealthz(c *gin.Context)
+	ListTrees(c *gin.Context)
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
@@ -44,8 +36,8 @@ type ServerInterfaceWrapper struct {
 
 type MiddlewareFunc func(c *gin.Context)
 
-// GetSumDBs operation middleware
-func (siw *ServerInterfaceWrapper) GetSumDBs(c *gin.Context) {
+// ListTrees operation middleware
+func (siw *ServerInterfaceWrapper) ListTrees(c *gin.Context) {
 
 	for _, middleware := range siw.HandlerMiddlewares {
 		middleware(c)
@@ -54,20 +46,7 @@ func (siw *ServerInterfaceWrapper) GetSumDBs(c *gin.Context) {
 		}
 	}
 
-	siw.Handler.GetSumDBs(c)
-}
-
-// GetHealthz operation middleware
-func (siw *ServerInterfaceWrapper) GetHealthz(c *gin.Context) {
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		middleware(c)
-		if c.IsAborted() {
-			return
-		}
-	}
-
-	siw.Handler.GetHealthz(c)
+	siw.Handler.ListTrees(c)
 }
 
 // GinServerOptions provides options for the Gin server.
@@ -97,6 +76,5 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 		ErrorHandler:       errorHandler,
 	}
 
-	router.GET(options.BaseURL+"/api/v1/sumdb/trees", wrapper.GetSumDBs)
-	router.GET(options.BaseURL+"/healthz", wrapper.GetHealthz)
+	router.GET(options.BaseURL+"/api/v1/sumdb/trees", wrapper.ListTrees)
 }

@@ -9,9 +9,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/pseudomuto/pacman/internal/api"
-	"github.com/pseudomuto/pacman/internal/ent"
-	"github.com/pseudomuto/pacman/internal/sumdb"
 	"github.com/pseudomuto/pacman/internal/types"
 	"go.uber.org/fx"
 )
@@ -29,12 +26,10 @@ type (
 		fx.In
 
 		Config       *ServerConfig
-		Database     *ent.Client
 		Lifecycle    fx.Lifecycle
 		Logger       *slog.Logger `optional:"true"`
 		PromRegistry *prometheus.Registry
 		Routers      []types.Router `group:"server_routers"`
-		SumDBs       []*sumdb.SumDB
 	}
 
 	// ServerConfig provides configuration options for the server.
@@ -72,7 +67,6 @@ type (
 	Server struct {
 		svr     *http.Server
 		cfg     *ServerConfig
-		db      *ent.Client
 		log     *slog.Logger
 		promReg *prometheus.Registry
 	}
@@ -84,19 +78,18 @@ func New(p *ServerParams) *Server {
 	// Set gin mode
 	gin.SetMode(p.Config.GinMode)
 
-	// Create gin engine and metrics middleware
+	// Create gin engine and common middleware
 	engine := gin.New()
-	engine.Use(createRecoveryMiddleware(p.Logger))
+	engine.Use(recoveryMiddleware(p.Logger))
 	engine.Use(createMetricsMiddleware(p.PromRegistry, p.Config.MetricsLabels))
 
-	for _, pr := range p.Routers {
-		pr.RegisterRoutes(engine)
+	for _, r := range p.Routers {
+		r.RegisterRoutes(engine)
 	}
 
 	svr := &Server{
 		log:     p.Logger.With("module", "server"),
 		cfg:     p.Config,
-		db:      p.Database,
 		promReg: p.PromRegistry,
 		svr: &http.Server{
 			Addr:         p.Config.ListenAddr,
@@ -106,8 +99,8 @@ func New(p *ServerParams) *Server {
 		},
 	}
 
-	// Register generated OpenAPI handlers.
-	api.RegisterHandlers(engine, svr)
+	// Register health endpoint.
+	svr.RegisterRoutes(engine)
 
 	return svr
 }
