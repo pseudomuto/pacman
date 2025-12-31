@@ -65,6 +65,11 @@ func UpdatedAt(v time.Time) predicate.SumDBRecord {
 	return predicate.SumDBRecord(sql.FieldEQ(FieldUpdatedAt, v))
 }
 
+// RecordID applies equality check predicate on the "record_id" field. It's identical to RecordIDEQ.
+func RecordID(v int64) predicate.SumDBRecord {
+	return predicate.SumDBRecord(sql.FieldEQ(FieldRecordID, v))
+}
+
 // Path applies equality check predicate on the "path" field. It's identical to PathEQ.
 func Path(v string) predicate.SumDBRecord {
 	return predicate.SumDBRecord(sql.FieldEQ(FieldPath, v))
@@ -158,6 +163,46 @@ func UpdatedAtLT(v time.Time) predicate.SumDBRecord {
 // UpdatedAtLTE applies the LTE predicate on the "updated_at" field.
 func UpdatedAtLTE(v time.Time) predicate.SumDBRecord {
 	return predicate.SumDBRecord(sql.FieldLTE(FieldUpdatedAt, v))
+}
+
+// RecordIDEQ applies the EQ predicate on the "record_id" field.
+func RecordIDEQ(v int64) predicate.SumDBRecord {
+	return predicate.SumDBRecord(sql.FieldEQ(FieldRecordID, v))
+}
+
+// RecordIDNEQ applies the NEQ predicate on the "record_id" field.
+func RecordIDNEQ(v int64) predicate.SumDBRecord {
+	return predicate.SumDBRecord(sql.FieldNEQ(FieldRecordID, v))
+}
+
+// RecordIDIn applies the In predicate on the "record_id" field.
+func RecordIDIn(vs ...int64) predicate.SumDBRecord {
+	return predicate.SumDBRecord(sql.FieldIn(FieldRecordID, vs...))
+}
+
+// RecordIDNotIn applies the NotIn predicate on the "record_id" field.
+func RecordIDNotIn(vs ...int64) predicate.SumDBRecord {
+	return predicate.SumDBRecord(sql.FieldNotIn(FieldRecordID, vs...))
+}
+
+// RecordIDGT applies the GT predicate on the "record_id" field.
+func RecordIDGT(v int64) predicate.SumDBRecord {
+	return predicate.SumDBRecord(sql.FieldGT(FieldRecordID, v))
+}
+
+// RecordIDGTE applies the GTE predicate on the "record_id" field.
+func RecordIDGTE(v int64) predicate.SumDBRecord {
+	return predicate.SumDBRecord(sql.FieldGTE(FieldRecordID, v))
+}
+
+// RecordIDLT applies the LT predicate on the "record_id" field.
+func RecordIDLT(v int64) predicate.SumDBRecord {
+	return predicate.SumDBRecord(sql.FieldLT(FieldRecordID, v))
+}
+
+// RecordIDLTE applies the LTE predicate on the "record_id" field.
+func RecordIDLTE(v int64) predicate.SumDBRecord {
+	return predicate.SumDBRecord(sql.FieldLTE(FieldRecordID, v))
 }
 
 // PathEQ applies the EQ predicate on the "path" field.

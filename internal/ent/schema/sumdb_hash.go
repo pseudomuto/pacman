@@ -25,7 +25,7 @@ func (SumDBHash) Fields() []ent.Field {
 func (SumDBHash) Indexes() []ent.Index {
 	return []ent.Index{
 		index.Edges("tree"),
-		index.Fields("index").Edges("tree"),
+		index.Fields("index").Edges("tree").Unique(),
 	}
 }
 

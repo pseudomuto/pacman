@@ -16,6 +16,7 @@ var Module = fx.Module(
 				ListenAddr:  c.Addr,
 				MetricsAddr: c.MetricsAddr,
 				GinMode:     gin.ReleaseMode,
+				ShowRoutes:  c.Debug,
 			}
 		},
 	),

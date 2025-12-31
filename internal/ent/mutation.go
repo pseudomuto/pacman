@@ -1826,6 +1826,8 @@ type SumDBRecordMutation struct {
 	id            *int
 	created_at    *time.Time
 	updated_at    *time.Time
+	record_id     *int64
+	addrecord_id  *int64
 	_path         *string
 	version       *string
 	data          *[]byte
@@ -2005,6 +2007,62 @@ func (m *SumDBRecordMutation) OldUpdatedAt(ctx context.Context) (v time.Time, er
 // ResetUpdatedAt resets all changes to the "updated_at" field.
 func (m *SumDBRecordMutation) ResetUpdatedAt() {
 	m.updated_at = nil
+}
+
+// SetRecordID sets the "record_id" field.
+func (m *SumDBRecordMutation) SetRecordID(i int64) {
+	m.record_id = &i
+	m.addrecord_id = nil
+}
+
+// RecordID returns the value of the "record_id" field in the mutation.
+func (m *SumDBRecordMutation) RecordID() (r int64, exists bool) {
+	v := m.record_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldRecordID returns the old "record_id" field's value of the SumDBRecord entity.
+// If the SumDBRecord object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *SumDBRecordMutation) OldRecordID(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldRecordID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldRecordID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldRecordID: %w", err)
+	}
+	return oldValue.RecordID, nil
+}
+
+// AddRecordID adds i to the "record_id" field.
+func (m *SumDBRecordMutation) AddRecordID(i int64) {
+	if m.addrecord_id != nil {
+		*m.addrecord_id += i
+	} else {
+		m.addrecord_id = &i
+	}
+}
+
+// AddedRecordID returns the value that was added to the "record_id" field in this mutation.
+func (m *SumDBRecordMutation) AddedRecordID() (r int64, exists bool) {
+	v := m.addrecord_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetRecordID resets all changes to the "record_id" field.
+func (m *SumDBRecordMutation) ResetRecordID() {
+	m.record_id = nil
+	m.addrecord_id = nil
 }
 
 // SetPath sets the "path" field.
@@ -2188,12 +2246,15 @@ func (m *SumDBRecordMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *SumDBRecordMutation) Fields() []string {
-	fields := make([]string, 0, 5)
+	fields := make([]string, 0, 6)
 	if m.created_at != nil {
 		fields = append(fields, sumdbrecord.FieldCreatedAt)
 	}
 	if m.updated_at != nil {
 		fields = append(fields, sumdbrecord.FieldUpdatedAt)
+	}
+	if m.record_id != nil {
+		fields = append(fields, sumdbrecord.FieldRecordID)
 	}
 	if m._path != nil {
 		fields = append(fields, sumdbrecord.FieldPath)
@@ -2216,6 +2277,8 @@ func (m *SumDBRecordMutation) Field(name string) (ent.Value, bool) {
 		return m.CreatedAt()
 	case sumdbrecord.FieldUpdatedAt:
 		return m.UpdatedAt()
+	case sumdbrecord.FieldRecordID:
+		return m.RecordID()
 	case sumdbrecord.FieldPath:
 		return m.Path()
 	case sumdbrecord.FieldVersion:
@@ -2235,6 +2298,8 @@ func (m *SumDBRecordMutation) OldField(ctx context.Context, name string) (ent.Va
 		return m.OldCreatedAt(ctx)
 	case sumdbrecord.FieldUpdatedAt:
 		return m.OldUpdatedAt(ctx)
+	case sumdbrecord.FieldRecordID:
+		return m.OldRecordID(ctx)
 	case sumdbrecord.FieldPath:
 		return m.OldPath(ctx)
 	case sumdbrecord.FieldVersion:
@@ -2264,6 +2329,13 @@ func (m *SumDBRecordMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetUpdatedAt(v)
 		return nil
+	case sumdbrecord.FieldRecordID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetRecordID(v)
+		return nil
 	case sumdbrecord.FieldPath:
 		v, ok := value.(string)
 		if !ok {
@@ -2292,13 +2364,21 @@ func (m *SumDBRecordMutation) SetField(name string, value ent.Value) error {
 // AddedFields returns all numeric fields that were incremented/decremented during
 // this mutation.
 func (m *SumDBRecordMutation) AddedFields() []string {
-	return nil
+	var fields []string
+	if m.addrecord_id != nil {
+		fields = append(fields, sumdbrecord.FieldRecordID)
+	}
+	return fields
 }
 
 // AddedField returns the numeric value that was incremented/decremented on a field
 // with the given name. The second boolean return value indicates that this field
 // was not set, or was not defined in the schema.
 func (m *SumDBRecordMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case sumdbrecord.FieldRecordID:
+		return m.AddedRecordID()
+	}
 	return nil, false
 }
 
@@ -2307,6 +2387,13 @@ func (m *SumDBRecordMutation) AddedField(name string) (ent.Value, bool) {
 // type.
 func (m *SumDBRecordMutation) AddField(name string, value ent.Value) error {
 	switch name {
+	case sumdbrecord.FieldRecordID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddRecordID(v)
+		return nil
 	}
 	return fmt.Errorf("unknown SumDBRecord numeric field %s", name)
 }
@@ -2339,6 +2426,9 @@ func (m *SumDBRecordMutation) ResetField(name string) error {
 		return nil
 	case sumdbrecord.FieldUpdatedAt:
 		m.ResetUpdatedAt()
+		return nil
+	case sumdbrecord.FieldRecordID:
+		m.ResetRecordID()
 		return nil
 	case sumdbrecord.FieldPath:
 		m.ResetPath()
@@ -2436,6 +2526,8 @@ type SumDBTreeMutation struct {
 	created_at     *time.Time
 	updated_at     *time.Time
 	name           *string
+	size           *int64
+	addsize        *int64
 	signer_key     *crypto.Secret
 	verifier_key   *string
 	clearedFields  map[string]struct{}
@@ -2656,6 +2748,62 @@ func (m *SumDBTreeMutation) ResetName() {
 	m.name = nil
 }
 
+// SetSize sets the "size" field.
+func (m *SumDBTreeMutation) SetSize(i int64) {
+	m.size = &i
+	m.addsize = nil
+}
+
+// Size returns the value of the "size" field in the mutation.
+func (m *SumDBTreeMutation) Size() (r int64, exists bool) {
+	v := m.size
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSize returns the old "size" field's value of the SumDBTree entity.
+// If the SumDBTree object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *SumDBTreeMutation) OldSize(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSize is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSize requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSize: %w", err)
+	}
+	return oldValue.Size, nil
+}
+
+// AddSize adds i to the "size" field.
+func (m *SumDBTreeMutation) AddSize(i int64) {
+	if m.addsize != nil {
+		*m.addsize += i
+	} else {
+		m.addsize = &i
+	}
+}
+
+// AddedSize returns the value that was added to the "size" field in this mutation.
+func (m *SumDBTreeMutation) AddedSize() (r int64, exists bool) {
+	v := m.addsize
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetSize resets all changes to the "size" field.
+func (m *SumDBTreeMutation) ResetSize() {
+	m.size = nil
+	m.addsize = nil
+}
+
 // SetSignerKey sets the "signer_key" field.
 func (m *SumDBTreeMutation) SetSignerKey(c crypto.Secret) {
 	m.signer_key = &c
@@ -2870,7 +3018,7 @@ func (m *SumDBTreeMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *SumDBTreeMutation) Fields() []string {
-	fields := make([]string, 0, 5)
+	fields := make([]string, 0, 6)
 	if m.created_at != nil {
 		fields = append(fields, sumdbtree.FieldCreatedAt)
 	}
@@ -2879,6 +3027,9 @@ func (m *SumDBTreeMutation) Fields() []string {
 	}
 	if m.name != nil {
 		fields = append(fields, sumdbtree.FieldName)
+	}
+	if m.size != nil {
+		fields = append(fields, sumdbtree.FieldSize)
 	}
 	if m.signer_key != nil {
 		fields = append(fields, sumdbtree.FieldSignerKey)
@@ -2900,6 +3051,8 @@ func (m *SumDBTreeMutation) Field(name string) (ent.Value, bool) {
 		return m.UpdatedAt()
 	case sumdbtree.FieldName:
 		return m.Name()
+	case sumdbtree.FieldSize:
+		return m.Size()
 	case sumdbtree.FieldSignerKey:
 		return m.SignerKey()
 	case sumdbtree.FieldVerifierKey:
@@ -2919,6 +3072,8 @@ func (m *SumDBTreeMutation) OldField(ctx context.Context, name string) (ent.Valu
 		return m.OldUpdatedAt(ctx)
 	case sumdbtree.FieldName:
 		return m.OldName(ctx)
+	case sumdbtree.FieldSize:
+		return m.OldSize(ctx)
 	case sumdbtree.FieldSignerKey:
 		return m.OldSignerKey(ctx)
 	case sumdbtree.FieldVerifierKey:
@@ -2953,6 +3108,13 @@ func (m *SumDBTreeMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetName(v)
 		return nil
+	case sumdbtree.FieldSize:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSize(v)
+		return nil
 	case sumdbtree.FieldSignerKey:
 		v, ok := value.(crypto.Secret)
 		if !ok {
@@ -2974,13 +3136,21 @@ func (m *SumDBTreeMutation) SetField(name string, value ent.Value) error {
 // AddedFields returns all numeric fields that were incremented/decremented during
 // this mutation.
 func (m *SumDBTreeMutation) AddedFields() []string {
-	return nil
+	var fields []string
+	if m.addsize != nil {
+		fields = append(fields, sumdbtree.FieldSize)
+	}
+	return fields
 }
 
 // AddedField returns the numeric value that was incremented/decremented on a field
 // with the given name. The second boolean return value indicates that this field
 // was not set, or was not defined in the schema.
 func (m *SumDBTreeMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case sumdbtree.FieldSize:
+		return m.AddedSize()
+	}
 	return nil, false
 }
 
@@ -2989,6 +3159,13 @@ func (m *SumDBTreeMutation) AddedField(name string) (ent.Value, bool) {
 // type.
 func (m *SumDBTreeMutation) AddField(name string, value ent.Value) error {
 	switch name {
+	case sumdbtree.FieldSize:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddSize(v)
+		return nil
 	}
 	return fmt.Errorf("unknown SumDBTree numeric field %s", name)
 }
@@ -3024,6 +3201,9 @@ func (m *SumDBTreeMutation) ResetField(name string) error {
 		return nil
 	case sumdbtree.FieldName:
 		m.ResetName()
+		return nil
+	case sumdbtree.FieldSize:
+		m.ResetSize()
 		return nil
 	case sumdbtree.FieldSignerKey:
 		m.ResetSignerKey()

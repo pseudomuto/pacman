@@ -59,6 +59,12 @@ func (_c *SumDBTreeCreate) SetName(v string) *SumDBTreeCreate {
 	return _c
 }
 
+// SetSize sets the "size" field.
+func (_c *SumDBTreeCreate) SetSize(v int64) *SumDBTreeCreate {
+	_c.mutation.SetSize(v)
+	return _c
+}
+
 // SetSignerKey sets the "signer_key" field.
 func (_c *SumDBTreeCreate) SetSignerKey(v crypto.Secret) *SumDBTreeCreate {
 	_c.mutation.SetSignerKey(v)
@@ -162,6 +168,9 @@ func (_c *SumDBTreeCreate) check() error {
 			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "SumDBTree.name": %w`, err)}
 		}
 	}
+	if _, ok := _c.mutation.Size(); !ok {
+		return &ValidationError{Name: "size", err: errors.New(`ent: missing required field "SumDBTree.size"`)}
+	}
 	if _, ok := _c.mutation.SignerKey(); !ok {
 		return &ValidationError{Name: "signer_key", err: errors.New(`ent: missing required field "SumDBTree.signer_key"`)}
 	}
@@ -216,6 +225,10 @@ func (_c *SumDBTreeCreate) createSpec() (*SumDBTree, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.Name(); ok {
 		_spec.SetField(sumdbtree.FieldName, field.TypeString, value)
 		_node.Name = value
+	}
+	if value, ok := _c.mutation.Size(); ok {
+		_spec.SetField(sumdbtree.FieldSize, field.TypeInt64, value)
+		_node.Size = value
 	}
 	if value, ok := _c.mutation.SignerKey(); ok {
 		_spec.SetField(sumdbtree.FieldSignerKey, field.TypeString, value)
@@ -333,6 +346,24 @@ func (u *SumDBTreeUpsert) UpdateName() *SumDBTreeUpsert {
 	return u
 }
 
+// SetSize sets the "size" field.
+func (u *SumDBTreeUpsert) SetSize(v int64) *SumDBTreeUpsert {
+	u.Set(sumdbtree.FieldSize, v)
+	return u
+}
+
+// UpdateSize sets the "size" field to the value that was provided on create.
+func (u *SumDBTreeUpsert) UpdateSize() *SumDBTreeUpsert {
+	u.SetExcluded(sumdbtree.FieldSize)
+	return u
+}
+
+// AddSize adds v to the "size" field.
+func (u *SumDBTreeUpsert) AddSize(v int64) *SumDBTreeUpsert {
+	u.Add(sumdbtree.FieldSize, v)
+	return u
+}
+
 // SetSignerKey sets the "signer_key" field.
 func (u *SumDBTreeUpsert) SetSignerKey(v crypto.Secret) *SumDBTreeUpsert {
 	u.Set(sumdbtree.FieldSignerKey, v)
@@ -427,6 +458,27 @@ func (u *SumDBTreeUpsertOne) SetName(v string) *SumDBTreeUpsertOne {
 func (u *SumDBTreeUpsertOne) UpdateName() *SumDBTreeUpsertOne {
 	return u.Update(func(s *SumDBTreeUpsert) {
 		s.UpdateName()
+	})
+}
+
+// SetSize sets the "size" field.
+func (u *SumDBTreeUpsertOne) SetSize(v int64) *SumDBTreeUpsertOne {
+	return u.Update(func(s *SumDBTreeUpsert) {
+		s.SetSize(v)
+	})
+}
+
+// AddSize adds v to the "size" field.
+func (u *SumDBTreeUpsertOne) AddSize(v int64) *SumDBTreeUpsertOne {
+	return u.Update(func(s *SumDBTreeUpsert) {
+		s.AddSize(v)
+	})
+}
+
+// UpdateSize sets the "size" field to the value that was provided on create.
+func (u *SumDBTreeUpsertOne) UpdateSize() *SumDBTreeUpsertOne {
+	return u.Update(func(s *SumDBTreeUpsert) {
+		s.UpdateSize()
 	})
 }
 
@@ -694,6 +746,27 @@ func (u *SumDBTreeUpsertBulk) SetName(v string) *SumDBTreeUpsertBulk {
 func (u *SumDBTreeUpsertBulk) UpdateName() *SumDBTreeUpsertBulk {
 	return u.Update(func(s *SumDBTreeUpsert) {
 		s.UpdateName()
+	})
+}
+
+// SetSize sets the "size" field.
+func (u *SumDBTreeUpsertBulk) SetSize(v int64) *SumDBTreeUpsertBulk {
+	return u.Update(func(s *SumDBTreeUpsert) {
+		s.SetSize(v)
+	})
+}
+
+// AddSize adds v to the "size" field.
+func (u *SumDBTreeUpsertBulk) AddSize(v int64) *SumDBTreeUpsertBulk {
+	return u.Update(func(s *SumDBTreeUpsert) {
+		s.AddSize(v)
+	})
+}
+
+// UpdateSize sets the "size" field to the value that was provided on create.
+func (u *SumDBTreeUpsertBulk) UpdateSize() *SumDBTreeUpsertBulk {
+	return u.Update(func(s *SumDBTreeUpsert) {
+		s.UpdateSize()
 	})
 }
 

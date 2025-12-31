@@ -1,5 +1,6 @@
 addr: :8080
 metricsAddr: :9090
+debug: true
 
 # Generated with `go run ./cmd/server --keygen && mv keys.bin ./hack/`
 cryptoKey: hack/keys.bin

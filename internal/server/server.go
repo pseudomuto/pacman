@@ -62,6 +62,9 @@ type (
 		// GinMode sets the gin framework mode (debug, release, test).
 		// Default: release
 		GinMode string
+
+		// When true, print all registered routes on startup.
+		ShowRoutes bool
 	}
 
 	Server struct {
@@ -101,6 +104,12 @@ func New(p *ServerParams) *Server {
 
 	// Register health endpoint.
 	svr.RegisterRoutes(engine)
+
+	if p.Config.ShowRoutes {
+		for _, r := range engine.Routes() {
+			svr.log.Info("Registered route", "path", r.Path)
+		}
+	}
 
 	return svr
 }
