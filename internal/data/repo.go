@@ -18,7 +18,7 @@ func NewRepo(db *ent.Client) *Repo {
 }
 
 func (r *Repo) CreateArtifact(ctx context.Context, af *ent.Artifact) (*ent.Artifact, error) {
-	return withTx(ctx, r.db, func(tx *ent.Tx) (*ent.Artifact, error) {
+	return WithTx(ctx, r.db, func(tx *ent.Tx) (*ent.Artifact, error) {
 		artifact, err := tx.Artifact.Create().
 			SetName(af.Name).
 			SetDescription(af.Description).

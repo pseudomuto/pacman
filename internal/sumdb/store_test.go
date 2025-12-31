@@ -23,8 +23,8 @@ func TestStore(t *testing.T) {
 	tree1, _ := client.SumDBTree.Get(ctx, 1)
 	tree2, _ := client.SumDBTree.Get(ctx, 2)
 
-	store := NewStore(tree1, client)
-	store2 := NewStore(tree2, client)
+	store := NewStore(tree1.ID, client)
+	store2 := NewStore(tree2.ID, client)
 
 	t.Run("RecordID", func(t *testing.T) {
 		id, err := store.RecordID(ctx, "github.com/pseudomuto/protoc-gen-doc", "v1.5.1")
@@ -53,27 +53,31 @@ func TestStore(t *testing.T) {
 	})
 
 	t.Run("AddRecord", func(t *testing.T) {
-		id, err := store2.AddRecord(ctx, &sumdb.Record{
-			Path:    "github.com/pseudomuto/protoc-gen-doc",
-			Version: "v1.5.1",
-			Data: fmt.Appendf(
-				nil,
-				"%s %s %s\n%s %s/go.mod %s\n",
-				"github.com/pseudomuto/protoc-gen-doc",
-				"v1.5.1",
-				"h1:Ah259kcrio7Ix1Rhb6u8FCaOkzf9qRBqXnvAufg061w=",
-				"github.com/pseudomuto/protoc-gen-doc",
-				"v1.5.1",
-				"h1:XpMKYg6zkcpgfpCfQ8GcWBDRtRxOmMR5w7pz4Xo+dYM=",
-			),
-		})
+		require.NoError(t, store2.WithTx(ctx, func(s sumdb.Store) error {
+			id, err := s.AddRecord(ctx, &sumdb.Record{
+				Path:    "github.com/pseudomuto/protoc-gen-doc",
+				Version: "v1.5.1",
+				Data: fmt.Appendf(
+					nil,
+					"%s %s %s\n%s %s/go.mod %s\n",
+					"github.com/pseudomuto/protoc-gen-doc",
+					"v1.5.1",
+					"h1:Ah259kcrio7Ix1Rhb6u8FCaOkzf9qRBqXnvAufg061w=",
+					"github.com/pseudomuto/protoc-gen-doc",
+					"v1.5.1",
+					"h1:XpMKYg6zkcpgfpCfQ8GcWBDRtRxOmMR5w7pz4Xo+dYM=",
+				),
+			})
 
-		require.NoError(t, err)
-		require.Equal(t, int64(2), id)
+			require.NoError(t, err)
+			require.Equal(t, int64(2), id)
 
-		recs, err := store2.Records(ctx, 1, 10)
-		require.NoError(t, err)
-		require.Len(t, recs, 2)
+			recs, err := s.Records(ctx, 1, 10)
+			require.NoError(t, err)
+			require.Len(t, recs, 2)
+
+			return nil
+		}))
 	})
 
 	t.Run("ReadHashes", func(t *testing.T) {

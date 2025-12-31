@@ -77,7 +77,7 @@ func NewSumDB(t *ent.SumDBTree, db *ent.Client, opts ...sumdb.Option) (*SumDB, e
 	sdb, err := sumdb.New(
 		t.Name,
 		string(t.SignerKey),
-		append(opts, sumdb.WithStore(NewStore(t, db)))...,
+		append(opts, sumdb.WithStore(NewStore(t.ID, db)))...,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize sumdb: %s, %w", t.Name, err)
