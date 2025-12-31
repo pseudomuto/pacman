@@ -17,6 +17,7 @@ func (SumDBRecord) Mixin() []ent.Mixin {
 
 func (SumDBRecord) Fields() []ent.Field {
 	return []ent.Field{
+		field.Int64("record_id"),
 		field.String("path").MaxLen(200),
 		field.String("version").MaxLen(20),
 		field.Bytes("data"),
@@ -26,6 +27,7 @@ func (SumDBRecord) Fields() []ent.Field {
 func (SumDBRecord) Indexes() []ent.Index {
 	return []ent.Index{
 		index.Edges("tree"),
+		index.Edges("tree").Fields("record_id").Unique(),
 		index.Edges("tree").Fields("path", "version").Unique(),
 	}
 }

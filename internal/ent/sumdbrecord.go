@@ -22,6 +22,8 @@ type SumDBRecord struct {
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	// The last time this object was modified
 	UpdatedAt time.Time `json:"updated_at,omitempty"`
+	// RecordID holds the value of the "record_id" field.
+	RecordID int64 `json:"record_id,omitempty"`
 	// Path holds the value of the "path" field.
 	Path string `json:"path,omitempty"`
 	// Version holds the value of the "version" field.
@@ -62,7 +64,7 @@ func (*SumDBRecord) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case sumdbrecord.FieldData:
 			values[i] = new([]byte)
-		case sumdbrecord.FieldID:
+		case sumdbrecord.FieldID, sumdbrecord.FieldRecordID:
 			values[i] = new(sql.NullInt64)
 		case sumdbrecord.FieldPath, sumdbrecord.FieldVersion:
 			values[i] = new(sql.NullString)
@@ -102,6 +104,12 @@ func (_m *SumDBRecord) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field updated_at", values[i])
 			} else if value.Valid {
 				_m.UpdatedAt = value.Time
+			}
+		case sumdbrecord.FieldRecordID:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field record_id", values[i])
+			} else if value.Valid {
+				_m.RecordID = value.Int64
 			}
 		case sumdbrecord.FieldPath:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -174,6 +182,9 @@ func (_m *SumDBRecord) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("updated_at=")
 	builder.WriteString(_m.UpdatedAt.Format(time.ANSIC))
+	builder.WriteString(", ")
+	builder.WriteString("record_id=")
+	builder.WriteString(fmt.Sprintf("%v", _m.RecordID))
 	builder.WriteString(", ")
 	builder.WriteString("path=")
 	builder.WriteString(_m.Path)

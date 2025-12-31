@@ -1,0 +1,21 @@
+trees:
+  - name: test.example.com
+    records:
+      - id: 1
+        path: github.com/pseudomuto/protoc-gen-doc
+        version: v1.5.1
+        zip: h1:Ah259kcrio7Ix1Rhb6u8FCaOkzf9qRBqXnvAufg061w=
+        mod: h1:XpMKYg6zkcpgfpCfQ8GcWBDRtRxOmMR5w7pz4Xo+dYM=
+      - id: 2
+        path: github.com/pseudomuto/where
+        version: v0.1.0
+        zip: h1:NQtb1jgHaYMb6SwH3AnzF/Y/WnurmUInfbVJSMCWLrc=
+        mod: h1:ZNSWY7FiJI2r+6CMS2XKpUc0ah+N03cRok15QGpsHKw=
+
+  - name: test2.example.com
+    records:
+      - id: 1
+        path: github.com/pseudomuto/where
+        version: v0.1.0
+        zip: h1:NQtb1jgHaYMb6SwH3AnzF/Y/WnurmUInfbVJSMCWLrc=
+        mod: h1:ZNSWY7FiJI2r+6CMS2XKpUc0ah+N03cRok15QGpsHKw=

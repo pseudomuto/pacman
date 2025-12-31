@@ -29,12 +29,12 @@ func NewStore(tree *ent.SumDBTree, db *ent.Client) *Store {
 }
 
 func (s *Store) RecordID(ctx context.Context, path, version string) (int64, error) {
-	id, err := s.tree.QueryRecords().
+	rec, err := s.tree.QueryRecords().
 		Where(
 			sumdbrecord.Path(path),
 			sumdbrecord.Version(version),
 		).
-		OnlyID(ctx)
+		Only(ctx)
 	if err != nil {
 		var nfe *ent.NotFoundError
 		if errors.As(err, &nfe) {
@@ -44,14 +44,14 @@ func (s *Store) RecordID(ctx context.Context, path, version string) (int64, erro
 		return 0, fmt.Errorf("failed looking up record: %s@%s, %w", path, version, err)
 	}
 
-	return int64(id), nil
+	return rec.RecordID, nil
 }
 
 func (s *Store) Records(ctx context.Context, id, n int64) ([]*sumdb.Record, error) {
 	recs, err := s.tree.QueryRecords().
-		Where(sumdbrecord.IDGTE(int(id))).
+		Where(sumdbrecord.RecordIDGTE(id)).
 		Limit(int(n)).
-		Order(sumdbrecord.ByID(sql.OrderAsc())).
+		Order(sumdbrecord.ByRecordID(sql.OrderAsc())).
 		All(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query records: %w", err)
@@ -60,7 +60,7 @@ func (s *Store) Records(ctx context.Context, id, n int64) ([]*sumdb.Record, erro
 	res := make([]*sumdb.Record, len(recs))
 	for i := range recs {
 		res[i] = &sumdb.Record{
-			ID:      int64(recs[i].ID),
+			ID:      recs[i].RecordID,
 			Path:    recs[i].Path,
 			Version: recs[i].Version,
 			Data:    recs[i].Data,
@@ -73,6 +73,7 @@ func (s *Store) Records(ctx context.Context, id, n int64) ([]*sumdb.Record, erro
 func (s *Store) AddRecord(ctx context.Context, r *sumdb.Record) (int64, error) {
 	rec, err := s.client.SumDBRecord.Create().
 		SetTree(s.tree).
+		SetRecordID(s.tree.Size).
 		SetPath(r.Path).
 		SetVersion(r.Version).
 		SetData(r.Data).
@@ -81,7 +82,7 @@ func (s *Store) AddRecord(ctx context.Context, r *sumdb.Record) (int64, error) {
 		return 0, fmt.Errorf("failed to create record: %s@%s, %w", r.Path, r.Version, err)
 	}
 
-	return int64(rec.ID), nil
+	return rec.RecordID, nil
 }
 
 func (s *Store) ReadHashes(ctx context.Context, indexes []int64) ([]tlog.Hash, error) {
@@ -121,14 +122,19 @@ func (s *Store) WriteHashes(ctx context.Context, indexes []int64, hashes []tlog.
 }
 
 func (s *Store) TreeSize(ctx context.Context) (int64, error) {
-	n, err := s.tree.QueryRecords().Count(ctx)
-	if err != nil {
-		return 0, errors.New("failed to count records")
-	}
-
-	return int64(n), nil
+	return s.tree.Size, nil
 }
 
 func (s *Store) SetTreeSize(ctx context.Context, size int64) error {
+	if err := s.tree.Update().SetSize(size).Exec(ctx); err != nil {
+		return fmt.Errorf("failed to update tree size: %w", err)
+	}
+
+	var err error
+	s.tree, err = s.client.SumDBTree.Get(ctx, s.tree.ID)
+	if err != nil {
+		return fmt.Errorf("failed to reload tree: %w", err)
+	}
+
 	return nil
 }

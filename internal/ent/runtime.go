@@ -90,11 +90,11 @@ func init() {
 	// sumdbrecord.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	sumdbrecord.UpdateDefaultUpdatedAt = sumdbrecordDescUpdatedAt.UpdateDefault.(func() time.Time)
 	// sumdbrecordDescPath is the schema descriptor for path field.
-	sumdbrecordDescPath := sumdbrecordFields[0].Descriptor()
+	sumdbrecordDescPath := sumdbrecordFields[1].Descriptor()
 	// sumdbrecord.PathValidator is a validator for the "path" field. It is called by the builders before save.
 	sumdbrecord.PathValidator = sumdbrecordDescPath.Validators[0].(func(string) error)
 	// sumdbrecordDescVersion is the schema descriptor for version field.
-	sumdbrecordDescVersion := sumdbrecordFields[1].Descriptor()
+	sumdbrecordDescVersion := sumdbrecordFields[2].Descriptor()
 	// sumdbrecord.VersionValidator is a validator for the "version" field. It is called by the builders before save.
 	sumdbrecord.VersionValidator = sumdbrecordDescVersion.Validators[0].(func(string) error)
 	sumdbtreeMixin := schema.SumDBTree{}.Mixin()
@@ -117,11 +117,11 @@ func init() {
 	// sumdbtree.NameValidator is a validator for the "name" field. It is called by the builders before save.
 	sumdbtree.NameValidator = sumdbtreeDescName.Validators[0].(func(string) error)
 	// sumdbtreeDescSignerKey is the schema descriptor for signer_key field.
-	sumdbtreeDescSignerKey := sumdbtreeFields[1].Descriptor()
+	sumdbtreeDescSignerKey := sumdbtreeFields[2].Descriptor()
 	// sumdbtree.SignerKeyValidator is a validator for the "signer_key" field. It is called by the builders before save.
 	sumdbtree.SignerKeyValidator = sumdbtreeDescSignerKey.Validators[0].(func(string) error)
 	// sumdbtreeDescVerifierKey is the schema descriptor for verifier_key field.
-	sumdbtreeDescVerifierKey := sumdbtreeFields[2].Descriptor()
+	sumdbtreeDescVerifierKey := sumdbtreeFields[3].Descriptor()
 	// sumdbtree.VerifierKeyValidator is a validator for the "verifier_key" field. It is called by the builders before save.
 	sumdbtree.VerifierKeyValidator = sumdbtreeDescVerifierKey.Validators[0].(func(string) error)
 }

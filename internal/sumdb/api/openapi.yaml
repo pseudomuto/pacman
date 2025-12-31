@@ -2,7 +2,7 @@ openapi: 3.0.0
 info:
   version: 0.1.0
   title: PacMan API - SumDB
-  description: SumDB transparency log management endpoints
+  description: SumDB (Go transparency log) endpoints
 paths:
   /api/v1/sumdb/trees:
     get:
@@ -15,19 +15,107 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/TreeList"
+
+  /api/v1/sumdb/trees/{name}/hashes:
+    get:
+      summary: List hashes in the specified tree
+      operationId: listTreeHashes
+      parameters:
+        - in: path
+          name: name
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HashList"
+
+  /api/v1/sumdb/trees/{name}/records:
+    get:
+      summary: List records in the specified tree
+      operationId: listTreeRecords
+      parameters:
+        - in: path
+          name: name
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RecordList"
 components:
   schemas:
+    Hash:
+      type: object
+      additionalProperties: false
+      required:
+        - index
+        - hash
+      properties:
+        index:
+          type: integer
+          format: int64
+        hash:
+          type: string
+    HashList:
+      type: array
+      items:
+        $ref: "#/components/schemas/Hash"
+
+    Record:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - path
+        - version
+        - data
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: integer
+          format: int64
+        path:
+          type: string
+        version:
+          type: string
+        data:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    RecordList:
+      type: array
+      items:
+        $ref: "#/components/schemas/Record"
+
     Tree:
       type: object
       additionalProperties: false
       required:
         - name
+        - size
         - verifierKey
         - createdAt
         - updatedAt
       properties:
         name:
           type: string
+        size:
+          type: integer
+          format: int64
         verifierKey:
           type: string
         createdAt:

@@ -34,6 +34,27 @@ func (_u *SumDBRecordUpdate) SetUpdatedAt(v time.Time) *SumDBRecordUpdate {
 	return _u
 }
 
+// SetRecordID sets the "record_id" field.
+func (_u *SumDBRecordUpdate) SetRecordID(v int64) *SumDBRecordUpdate {
+	_u.mutation.ResetRecordID()
+	_u.mutation.SetRecordID(v)
+	return _u
+}
+
+// SetNillableRecordID sets the "record_id" field if the given value is not nil.
+func (_u *SumDBRecordUpdate) SetNillableRecordID(v *int64) *SumDBRecordUpdate {
+	if v != nil {
+		_u.SetRecordID(*v)
+	}
+	return _u
+}
+
+// AddRecordID adds value to the "record_id" field.
+func (_u *SumDBRecordUpdate) AddRecordID(v int64) *SumDBRecordUpdate {
+	_u.mutation.AddRecordID(v)
+	return _u
+}
+
 // SetPath sets the "path" field.
 func (_u *SumDBRecordUpdate) SetPath(v string) *SumDBRecordUpdate {
 	_u.mutation.SetPath(v)
@@ -142,6 +163,12 @@ func (_u *SumDBRecordUpdate) sqlSave(ctx context.Context) (_node int, err error)
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(sumdbrecord.FieldUpdatedAt, field.TypeTime, value)
 	}
+	if value, ok := _u.mutation.RecordID(); ok {
+		_spec.SetField(sumdbrecord.FieldRecordID, field.TypeInt64, value)
+	}
+	if value, ok := _u.mutation.AddedRecordID(); ok {
+		_spec.AddField(sumdbrecord.FieldRecordID, field.TypeInt64, value)
+	}
 	if value, ok := _u.mutation.Path(); ok {
 		_spec.SetField(sumdbrecord.FieldPath, field.TypeString, value)
 	}
@@ -174,6 +201,27 @@ type SumDBRecordUpdateOne struct {
 // SetUpdatedAt sets the "updated_at" field.
 func (_u *SumDBRecordUpdateOne) SetUpdatedAt(v time.Time) *SumDBRecordUpdateOne {
 	_u.mutation.SetUpdatedAt(v)
+	return _u
+}
+
+// SetRecordID sets the "record_id" field.
+func (_u *SumDBRecordUpdateOne) SetRecordID(v int64) *SumDBRecordUpdateOne {
+	_u.mutation.ResetRecordID()
+	_u.mutation.SetRecordID(v)
+	return _u
+}
+
+// SetNillableRecordID sets the "record_id" field if the given value is not nil.
+func (_u *SumDBRecordUpdateOne) SetNillableRecordID(v *int64) *SumDBRecordUpdateOne {
+	if v != nil {
+		_u.SetRecordID(*v)
+	}
+	return _u
+}
+
+// AddRecordID adds value to the "record_id" field.
+func (_u *SumDBRecordUpdateOne) AddRecordID(v int64) *SumDBRecordUpdateOne {
+	_u.mutation.AddRecordID(v)
 	return _u
 }
 
@@ -314,6 +362,12 @@ func (_u *SumDBRecordUpdateOne) sqlSave(ctx context.Context) (_node *SumDBRecord
 	}
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(sumdbrecord.FieldUpdatedAt, field.TypeTime, value)
+	}
+	if value, ok := _u.mutation.RecordID(); ok {
+		_spec.SetField(sumdbrecord.FieldRecordID, field.TypeInt64, value)
+	}
+	if value, ok := _u.mutation.AddedRecordID(); ok {
+		_spec.AddField(sumdbrecord.FieldRecordID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.Path(); ok {
 		_spec.SetField(sumdbrecord.FieldPath, field.TypeString, value)

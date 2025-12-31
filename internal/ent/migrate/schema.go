@@ -115,7 +115,7 @@ var (
 			},
 			{
 				Name:    "sumdbhash_index_tree_id",
-				Unique:  false,
+				Unique:  true,
 				Columns: []*schema.Column{SumDbHashesColumns[3], SumDbHashesColumns[5]},
 			},
 		},
@@ -125,6 +125,7 @@ var (
 		{Name: "id", Type: field.TypeInt, Increment: true},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "record_id", Type: field.TypeInt64},
 		{Name: "path", Type: field.TypeString, Size: 200},
 		{Name: "version", Type: field.TypeString, Size: 20},
 		{Name: "data", Type: field.TypeBytes},
@@ -138,7 +139,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "sum_db_records_sum_db_trees_records",
-				Columns:    []*schema.Column{SumDbRecordsColumns[6]},
+				Columns:    []*schema.Column{SumDbRecordsColumns[7]},
 				RefColumns: []*schema.Column{SumDbTreesColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
@@ -157,12 +158,17 @@ var (
 			{
 				Name:    "sumdbrecord_tree_id",
 				Unique:  false,
-				Columns: []*schema.Column{SumDbRecordsColumns[6]},
+				Columns: []*schema.Column{SumDbRecordsColumns[7]},
+			},
+			{
+				Name:    "sumdbrecord_record_id_tree_id",
+				Unique:  true,
+				Columns: []*schema.Column{SumDbRecordsColumns[3], SumDbRecordsColumns[7]},
 			},
 			{
 				Name:    "sumdbrecord_path_version_tree_id",
 				Unique:  true,
-				Columns: []*schema.Column{SumDbRecordsColumns[3], SumDbRecordsColumns[4], SumDbRecordsColumns[6]},
+				Columns: []*schema.Column{SumDbRecordsColumns[4], SumDbRecordsColumns[5], SumDbRecordsColumns[7]},
 			},
 		},
 	}
@@ -172,6 +178,7 @@ var (
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
 		{Name: "name", Type: field.TypeString, Unique: true, Size: 200},
+		{Name: "size", Type: field.TypeInt64},
 		{Name: "signer_key", Type: field.TypeString, Size: 100},
 		{Name: "verifier_key", Type: field.TypeString, Size: 100},
 	}

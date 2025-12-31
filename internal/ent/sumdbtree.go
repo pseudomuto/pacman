@@ -24,6 +24,8 @@ type SumDBTree struct {
 	UpdatedAt time.Time `json:"updated_at,omitempty"`
 	// Name holds the value of the "name" field.
 	Name string `json:"name,omitempty"`
+	// Size holds the value of the "size" field.
+	Size int64 `json:"size,omitempty"`
 	// SignerKey holds the value of the "signer_key" field.
 	SignerKey crypto.Secret `json:"signer_key,omitempty"`
 	// VerifierKey holds the value of the "verifier_key" field.
@@ -70,7 +72,7 @@ func (*SumDBTree) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case sumdbtree.FieldSignerKey:
 			values[i] = new(crypto.Secret)
-		case sumdbtree.FieldID:
+		case sumdbtree.FieldID, sumdbtree.FieldSize:
 			values[i] = new(sql.NullInt64)
 		case sumdbtree.FieldName, sumdbtree.FieldVerifierKey:
 			values[i] = new(sql.NullString)
@@ -114,6 +116,12 @@ func (_m *SumDBTree) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field name", values[i])
 			} else if value.Valid {
 				_m.Name = value.String
+			}
+		case sumdbtree.FieldSize:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field size", values[i])
+			} else if value.Valid {
+				_m.Size = value.Int64
 			}
 		case sumdbtree.FieldSignerKey:
 			if value, ok := values[i].(*crypto.Secret); !ok {
@@ -181,6 +189,9 @@ func (_m *SumDBTree) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("name=")
 	builder.WriteString(_m.Name)
+	builder.WriteString(", ")
+	builder.WriteString("size=")
+	builder.WriteString(fmt.Sprintf("%v", _m.Size))
 	builder.WriteString(", ")
 	builder.WriteString("signer_key=")
 	builder.WriteString(fmt.Sprintf("%v", _m.SignerKey))

@@ -51,6 +51,12 @@ func (_c *SumDBRecordCreate) SetNillableUpdatedAt(v *time.Time) *SumDBRecordCrea
 	return _c
 }
 
+// SetRecordID sets the "record_id" field.
+func (_c *SumDBRecordCreate) SetRecordID(v int64) *SumDBRecordCreate {
+	_c.mutation.SetRecordID(v)
+	return _c
+}
+
 // SetPath sets the "path" field.
 func (_c *SumDBRecordCreate) SetPath(v string) *SumDBRecordCreate {
 	_c.mutation.SetPath(v)
@@ -133,6 +139,9 @@ func (_c *SumDBRecordCreate) check() error {
 	if _, ok := _c.mutation.UpdatedAt(); !ok {
 		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "SumDBRecord.updated_at"`)}
 	}
+	if _, ok := _c.mutation.RecordID(); !ok {
+		return &ValidationError{Name: "record_id", err: errors.New(`ent: missing required field "SumDBRecord.record_id"`)}
+	}
 	if _, ok := _c.mutation.Path(); !ok {
 		return &ValidationError{Name: "path", err: errors.New(`ent: missing required field "SumDBRecord.path"`)}
 	}
@@ -189,6 +198,10 @@ func (_c *SumDBRecordCreate) createSpec() (*SumDBRecord, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.UpdatedAt(); ok {
 		_spec.SetField(sumdbrecord.FieldUpdatedAt, field.TypeTime, value)
 		_node.UpdatedAt = value
+	}
+	if value, ok := _c.mutation.RecordID(); ok {
+		_spec.SetField(sumdbrecord.FieldRecordID, field.TypeInt64, value)
+		_node.RecordID = value
 	}
 	if value, ok := _c.mutation.Path(); ok {
 		_spec.SetField(sumdbrecord.FieldPath, field.TypeString, value)
@@ -280,6 +293,24 @@ func (u *SumDBRecordUpsert) SetUpdatedAt(v time.Time) *SumDBRecordUpsert {
 // UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
 func (u *SumDBRecordUpsert) UpdateUpdatedAt() *SumDBRecordUpsert {
 	u.SetExcluded(sumdbrecord.FieldUpdatedAt)
+	return u
+}
+
+// SetRecordID sets the "record_id" field.
+func (u *SumDBRecordUpsert) SetRecordID(v int64) *SumDBRecordUpsert {
+	u.Set(sumdbrecord.FieldRecordID, v)
+	return u
+}
+
+// UpdateRecordID sets the "record_id" field to the value that was provided on create.
+func (u *SumDBRecordUpsert) UpdateRecordID() *SumDBRecordUpsert {
+	u.SetExcluded(sumdbrecord.FieldRecordID)
+	return u
+}
+
+// AddRecordID adds v to the "record_id" field.
+func (u *SumDBRecordUpsert) AddRecordID(v int64) *SumDBRecordUpsert {
+	u.Add(sumdbrecord.FieldRecordID, v)
 	return u
 }
 
@@ -375,6 +406,27 @@ func (u *SumDBRecordUpsertOne) SetUpdatedAt(v time.Time) *SumDBRecordUpsertOne {
 func (u *SumDBRecordUpsertOne) UpdateUpdatedAt() *SumDBRecordUpsertOne {
 	return u.Update(func(s *SumDBRecordUpsert) {
 		s.UpdateUpdatedAt()
+	})
+}
+
+// SetRecordID sets the "record_id" field.
+func (u *SumDBRecordUpsertOne) SetRecordID(v int64) *SumDBRecordUpsertOne {
+	return u.Update(func(s *SumDBRecordUpsert) {
+		s.SetRecordID(v)
+	})
+}
+
+// AddRecordID adds v to the "record_id" field.
+func (u *SumDBRecordUpsertOne) AddRecordID(v int64) *SumDBRecordUpsertOne {
+	return u.Update(func(s *SumDBRecordUpsert) {
+		s.AddRecordID(v)
+	})
+}
+
+// UpdateRecordID sets the "record_id" field to the value that was provided on create.
+func (u *SumDBRecordUpsertOne) UpdateRecordID() *SumDBRecordUpsertOne {
+	return u.Update(func(s *SumDBRecordUpsert) {
+		s.UpdateRecordID()
 	})
 }
 
@@ -642,6 +694,27 @@ func (u *SumDBRecordUpsertBulk) SetUpdatedAt(v time.Time) *SumDBRecordUpsertBulk
 func (u *SumDBRecordUpsertBulk) UpdateUpdatedAt() *SumDBRecordUpsertBulk {
 	return u.Update(func(s *SumDBRecordUpsert) {
 		s.UpdateUpdatedAt()
+	})
+}
+
+// SetRecordID sets the "record_id" field.
+func (u *SumDBRecordUpsertBulk) SetRecordID(v int64) *SumDBRecordUpsertBulk {
+	return u.Update(func(s *SumDBRecordUpsert) {
+		s.SetRecordID(v)
+	})
+}
+
+// AddRecordID adds v to the "record_id" field.
+func (u *SumDBRecordUpsertBulk) AddRecordID(v int64) *SumDBRecordUpsertBulk {
+	return u.Update(func(s *SumDBRecordUpsert) {
+		s.AddRecordID(v)
+	})
+}
+
+// UpdateRecordID sets the "record_id" field to the value that was provided on create.
+func (u *SumDBRecordUpsertBulk) UpdateRecordID() *SumDBRecordUpsertBulk {
+	return u.Update(func(s *SumDBRecordUpsert) {
+		s.UpdateRecordID()
 	})
 }
 

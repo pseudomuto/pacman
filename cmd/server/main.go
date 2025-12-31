@@ -57,7 +57,9 @@ func main() {
 				fx.Supply(config.ConfigFilePath(cmd.String("config"))),
 				fx.Provide(
 					slog.Default,
-					promRegistry,
+					func() *prometheus.Registry {
+						return prometheus.DefaultRegisterer.(*prometheus.Registry)
+					},
 				),
 				config.Module,
 				crypto.Module,
@@ -82,8 +84,4 @@ func main() {
 	if err := app.Run(context.Background(), os.Args); err != nil {
 		slog.Error("failed running server", "err", err)
 	}
-}
-
-func promRegistry() *prometheus.Registry {
-	return prometheus.DefaultRegisterer.(*prometheus.Registry)
 }

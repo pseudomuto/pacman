@@ -20,6 +20,8 @@ const (
 	FieldUpdatedAt = "updated_at"
 	// FieldName holds the string denoting the name field in the database.
 	FieldName = "name"
+	// FieldSize holds the string denoting the size field in the database.
+	FieldSize = "size"
 	// FieldSignerKey holds the string denoting the signer_key field in the database.
 	FieldSignerKey = "signer_key"
 	// FieldVerifierKey holds the string denoting the verifier_key field in the database.
@@ -52,6 +54,7 @@ var Columns = []string{
 	FieldCreatedAt,
 	FieldUpdatedAt,
 	FieldName,
+	FieldSize,
 	FieldSignerKey,
 	FieldVerifierKey,
 }
@@ -102,6 +105,11 @@ func ByUpdatedAt(opts ...sql.OrderTermOption) OrderOption {
 // ByName orders the results by the name field.
 func ByName(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldName, opts...).ToFunc()
+}
+
+// BySize orders the results by the size field.
+func BySize(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldSize, opts...).ToFunc()
 }
 
 // BySignerKey orders the results by the signer_key field.

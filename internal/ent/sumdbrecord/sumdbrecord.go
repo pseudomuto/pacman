@@ -18,6 +18,8 @@ const (
 	FieldCreatedAt = "created_at"
 	// FieldUpdatedAt holds the string denoting the updated_at field in the database.
 	FieldUpdatedAt = "updated_at"
+	// FieldRecordID holds the string denoting the record_id field in the database.
+	FieldRecordID = "record_id"
 	// FieldPath holds the string denoting the path field in the database.
 	FieldPath = "path"
 	// FieldVersion holds the string denoting the version field in the database.
@@ -42,6 +44,7 @@ var Columns = []string{
 	FieldID,
 	FieldCreatedAt,
 	FieldUpdatedAt,
+	FieldRecordID,
 	FieldPath,
 	FieldVersion,
 	FieldData,
@@ -97,6 +100,11 @@ func ByCreatedAt(opts ...sql.OrderTermOption) OrderOption {
 // ByUpdatedAt orders the results by the updated_at field.
 func ByUpdatedAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldUpdatedAt, opts...).ToFunc()
+}
+
+// ByRecordID orders the results by the record_id field.
+func ByRecordID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldRecordID, opts...).ToFunc()
 }
 
 // ByPath orders the results by the path field.

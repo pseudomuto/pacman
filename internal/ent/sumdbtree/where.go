@@ -71,6 +71,11 @@ func Name(v string) predicate.SumDBTree {
 	return predicate.SumDBTree(sql.FieldEQ(FieldName, v))
 }
 
+// Size applies equality check predicate on the "size" field. It's identical to SizeEQ.
+func Size(v int64) predicate.SumDBTree {
+	return predicate.SumDBTree(sql.FieldEQ(FieldSize, v))
+}
+
 // SignerKey applies equality check predicate on the "signer_key" field. It's identical to SignerKeyEQ.
 func SignerKey(v crypto.Secret) predicate.SumDBTree {
 	return predicate.SumDBTree(sql.FieldEQ(FieldSignerKey, v))
@@ -224,6 +229,46 @@ func NameEqualFold(v string) predicate.SumDBTree {
 // NameContainsFold applies the ContainsFold predicate on the "name" field.
 func NameContainsFold(v string) predicate.SumDBTree {
 	return predicate.SumDBTree(sql.FieldContainsFold(FieldName, v))
+}
+
+// SizeEQ applies the EQ predicate on the "size" field.
+func SizeEQ(v int64) predicate.SumDBTree {
+	return predicate.SumDBTree(sql.FieldEQ(FieldSize, v))
+}
+
+// SizeNEQ applies the NEQ predicate on the "size" field.
+func SizeNEQ(v int64) predicate.SumDBTree {
+	return predicate.SumDBTree(sql.FieldNEQ(FieldSize, v))
+}
+
+// SizeIn applies the In predicate on the "size" field.
+func SizeIn(vs ...int64) predicate.SumDBTree {
+	return predicate.SumDBTree(sql.FieldIn(FieldSize, vs...))
+}
+
+// SizeNotIn applies the NotIn predicate on the "size" field.
+func SizeNotIn(vs ...int64) predicate.SumDBTree {
+	return predicate.SumDBTree(sql.FieldNotIn(FieldSize, vs...))
+}
+
+// SizeGT applies the GT predicate on the "size" field.
+func SizeGT(v int64) predicate.SumDBTree {
+	return predicate.SumDBTree(sql.FieldGT(FieldSize, v))
+}
+
+// SizeGTE applies the GTE predicate on the "size" field.
+func SizeGTE(v int64) predicate.SumDBTree {
+	return predicate.SumDBTree(sql.FieldGTE(FieldSize, v))
+}
+
+// SizeLT applies the LT predicate on the "size" field.
+func SizeLT(v int64) predicate.SumDBTree {
+	return predicate.SumDBTree(sql.FieldLT(FieldSize, v))
+}
+
+// SizeLTE applies the LTE predicate on the "size" field.
+func SizeLTE(v int64) predicate.SumDBTree {
+	return predicate.SumDBTree(sql.FieldLTE(FieldSize, v))
 }
 
 // SignerKeyEQ applies the EQ predicate on the "signer_key" field.

@@ -51,6 +51,27 @@ func (_u *SumDBTreeUpdate) SetNillableName(v *string) *SumDBTreeUpdate {
 	return _u
 }
 
+// SetSize sets the "size" field.
+func (_u *SumDBTreeUpdate) SetSize(v int64) *SumDBTreeUpdate {
+	_u.mutation.ResetSize()
+	_u.mutation.SetSize(v)
+	return _u
+}
+
+// SetNillableSize sets the "size" field if the given value is not nil.
+func (_u *SumDBTreeUpdate) SetNillableSize(v *int64) *SumDBTreeUpdate {
+	if v != nil {
+		_u.SetSize(*v)
+	}
+	return _u
+}
+
+// AddSize adds value to the "size" field.
+func (_u *SumDBTreeUpdate) AddSize(v int64) *SumDBTreeUpdate {
+	_u.mutation.AddSize(v)
+	return _u
+}
+
 // SetSignerKey sets the "signer_key" field.
 func (_u *SumDBTreeUpdate) SetSignerKey(v crypto.Secret) *SumDBTreeUpdate {
 	_u.mutation.SetSignerKey(v)
@@ -230,6 +251,12 @@ func (_u *SumDBTreeUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(sumdbtree.FieldName, field.TypeString, value)
 	}
+	if value, ok := _u.mutation.Size(); ok {
+		_spec.SetField(sumdbtree.FieldSize, field.TypeInt64, value)
+	}
+	if value, ok := _u.mutation.AddedSize(); ok {
+		_spec.AddField(sumdbtree.FieldSize, field.TypeInt64, value)
+	}
 	if value, ok := _u.mutation.SignerKey(); ok {
 		_spec.SetField(sumdbtree.FieldSignerKey, field.TypeString, value)
 	}
@@ -363,6 +390,27 @@ func (_u *SumDBTreeUpdateOne) SetNillableName(v *string) *SumDBTreeUpdateOne {
 	if v != nil {
 		_u.SetName(*v)
 	}
+	return _u
+}
+
+// SetSize sets the "size" field.
+func (_u *SumDBTreeUpdateOne) SetSize(v int64) *SumDBTreeUpdateOne {
+	_u.mutation.ResetSize()
+	_u.mutation.SetSize(v)
+	return _u
+}
+
+// SetNillableSize sets the "size" field if the given value is not nil.
+func (_u *SumDBTreeUpdateOne) SetNillableSize(v *int64) *SumDBTreeUpdateOne {
+	if v != nil {
+		_u.SetSize(*v)
+	}
+	return _u
+}
+
+// AddSize adds value to the "size" field.
+func (_u *SumDBTreeUpdateOne) AddSize(v int64) *SumDBTreeUpdateOne {
+	_u.mutation.AddSize(v)
 	return _u
 }
 
@@ -574,6 +622,12 @@ func (_u *SumDBTreeUpdateOne) sqlSave(ctx context.Context) (_node *SumDBTree, er
 	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(sumdbtree.FieldName, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.Size(); ok {
+		_spec.SetField(sumdbtree.FieldSize, field.TypeInt64, value)
+	}
+	if value, ok := _u.mutation.AddedSize(); ok {
+		_spec.AddField(sumdbtree.FieldSize, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.SignerKey(); ok {
 		_spec.SetField(sumdbtree.FieldSignerKey, field.TypeString, value)
