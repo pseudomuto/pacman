@@ -7,7 +7,7 @@ import (
 	"github.com/pseudomuto/pacman/internal/ent"
 )
 
-// withTx starts a new ent transaction, invokes fn with the active transaction,
+// WithTx starts a new ent transaction, invokes fn with the active transaction,
 // and manages the full transaction lifecycle. If fn returns an error, the
 // transaction is rolled back and that error is returned (optionally wrapped
 // with any rollback error). If fn completes without error, the transaction is
@@ -17,7 +17,7 @@ import (
 // back the transaction and then re-panics with the original value. This
 // ensures that no partial changes are committed while still propagating the
 // panic to the caller.
-func withTx[T any](ctx context.Context, client *ent.Client, fn func(tx *ent.Tx) (*T, error)) (*T, error) {
+func WithTx[T any](ctx context.Context, client *ent.Client, fn func(tx *ent.Tx) (*T, error)) (*T, error) {
 	tx, err := client.Tx(ctx)
 	if err != nil {
 		return nil, err
