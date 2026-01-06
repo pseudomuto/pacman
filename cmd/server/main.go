@@ -7,9 +7,11 @@ import (
 	"os"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/pseudomuto/pacman/internal/boot"
 	"github.com/pseudomuto/pacman/internal/config"
 	"github.com/pseudomuto/pacman/internal/crypto"
 	"github.com/pseudomuto/pacman/internal/data"
+	"github.com/pseudomuto/pacman/internal/goproxy"
 	"github.com/pseudomuto/pacman/internal/packager"
 	"github.com/pseudomuto/pacman/internal/publisher"
 	"github.com/pseudomuto/pacman/internal/server"
@@ -61,9 +63,11 @@ func main() {
 						return prometheus.DefaultRegisterer.(*prometheus.Registry)
 					},
 				),
+				boot.Module,
 				config.Module,
 				crypto.Module,
 				data.Module,
+				goproxy.Module,
 				packager.Module,
 				publisher.Module,
 				server.Module,

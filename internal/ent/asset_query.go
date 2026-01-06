@@ -15,58 +15,55 @@ import (
 	"github.com/pseudomuto/pacman/internal/ent/asset"
 	"github.com/pseudomuto/pacman/internal/ent/predicate"
 	"github.com/pseudomuto/pacman/internal/ent/sumdbrecord"
-	"github.com/pseudomuto/pacman/internal/ent/sumdbtree"
 )
 
-// SumDBRecordQuery is the builder for querying SumDBRecord entities.
-type SumDBRecordQuery struct {
+// AssetQuery is the builder for querying Asset entities.
+type AssetQuery struct {
 	config
-	ctx        *QueryContext
-	order      []sumdbrecord.OrderOption
-	inters     []Interceptor
-	predicates []predicate.SumDBRecord
-	withAssets *AssetQuery
-	withTree   *SumDBTreeQuery
-	withFKs    bool
+	ctx              *QueryContext
+	order            []asset.OrderOption
+	inters           []Interceptor
+	predicates       []predicate.Asset
+	withSumdbRecords *SumDBRecordQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
 }
 
-// Where adds a new predicate for the SumDBRecordQuery builder.
-func (_q *SumDBRecordQuery) Where(ps ...predicate.SumDBRecord) *SumDBRecordQuery {
+// Where adds a new predicate for the AssetQuery builder.
+func (_q *AssetQuery) Where(ps ...predicate.Asset) *AssetQuery {
 	_q.predicates = append(_q.predicates, ps...)
 	return _q
 }
 
 // Limit the number of records to be returned by this query.
-func (_q *SumDBRecordQuery) Limit(limit int) *SumDBRecordQuery {
+func (_q *AssetQuery) Limit(limit int) *AssetQuery {
 	_q.ctx.Limit = &limit
 	return _q
 }
 
 // Offset to start from.
-func (_q *SumDBRecordQuery) Offset(offset int) *SumDBRecordQuery {
+func (_q *AssetQuery) Offset(offset int) *AssetQuery {
 	_q.ctx.Offset = &offset
 	return _q
 }
 
 // Unique configures the query builder to filter duplicate records on query.
 // By default, unique is set to true, and can be disabled using this method.
-func (_q *SumDBRecordQuery) Unique(unique bool) *SumDBRecordQuery {
+func (_q *AssetQuery) Unique(unique bool) *AssetQuery {
 	_q.ctx.Unique = &unique
 	return _q
 }
 
 // Order specifies how the records should be ordered.
-func (_q *SumDBRecordQuery) Order(o ...sumdbrecord.OrderOption) *SumDBRecordQuery {
+func (_q *AssetQuery) Order(o ...asset.OrderOption) *AssetQuery {
 	_q.order = append(_q.order, o...)
 	return _q
 }
 
-// QueryAssets chains the current query on the "assets" edge.
-func (_q *SumDBRecordQuery) QueryAssets() *AssetQuery {
-	query := (&AssetClient{config: _q.config}).Query()
+// QuerySumdbRecords chains the current query on the "sumdb_records" edge.
+func (_q *AssetQuery) QuerySumdbRecords() *SumDBRecordQuery {
+	query := (&SumDBRecordClient{config: _q.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
 		if err := _q.prepareQuery(ctx); err != nil {
 			return nil, err
@@ -76,9 +73,9 @@ func (_q *SumDBRecordQuery) QueryAssets() *AssetQuery {
 			return nil, err
 		}
 		step := sqlgraph.NewStep(
-			sqlgraph.From(sumdbrecord.Table, sumdbrecord.FieldID, selector),
-			sqlgraph.To(asset.Table, asset.FieldID),
-			sqlgraph.Edge(sqlgraph.M2M, false, sumdbrecord.AssetsTable, sumdbrecord.AssetsPrimaryKey...),
+			sqlgraph.From(asset.Table, asset.FieldID, selector),
+			sqlgraph.To(sumdbrecord.Table, sumdbrecord.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, true, asset.SumdbRecordsTable, asset.SumdbRecordsPrimaryKey...),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -86,43 +83,21 @@ func (_q *SumDBRecordQuery) QueryAssets() *AssetQuery {
 	return query
 }
 
-// QueryTree chains the current query on the "tree" edge.
-func (_q *SumDBRecordQuery) QueryTree() *SumDBTreeQuery {
-	query := (&SumDBTreeClient{config: _q.config}).Query()
-	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
-		if err := _q.prepareQuery(ctx); err != nil {
-			return nil, err
-		}
-		selector := _q.sqlQuery(ctx)
-		if err := selector.Err(); err != nil {
-			return nil, err
-		}
-		step := sqlgraph.NewStep(
-			sqlgraph.From(sumdbrecord.Table, sumdbrecord.FieldID, selector),
-			sqlgraph.To(sumdbtree.Table, sumdbtree.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, sumdbrecord.TreeTable, sumdbrecord.TreeColumn),
-		)
-		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
-		return fromU, nil
-	}
-	return query
-}
-
-// First returns the first SumDBRecord entity from the query.
-// Returns a *NotFoundError when no SumDBRecord was found.
-func (_q *SumDBRecordQuery) First(ctx context.Context) (*SumDBRecord, error) {
+// First returns the first Asset entity from the query.
+// Returns a *NotFoundError when no Asset was found.
+func (_q *AssetQuery) First(ctx context.Context) (*Asset, error) {
 	nodes, err := _q.Limit(1).All(setContextOp(ctx, _q.ctx, ent.OpQueryFirst))
 	if err != nil {
 		return nil, err
 	}
 	if len(nodes) == 0 {
-		return nil, &NotFoundError{sumdbrecord.Label}
+		return nil, &NotFoundError{asset.Label}
 	}
 	return nodes[0], nil
 }
 
 // FirstX is like First, but panics if an error occurs.
-func (_q *SumDBRecordQuery) FirstX(ctx context.Context) *SumDBRecord {
+func (_q *AssetQuery) FirstX(ctx context.Context) *Asset {
 	node, err := _q.First(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -130,22 +105,22 @@ func (_q *SumDBRecordQuery) FirstX(ctx context.Context) *SumDBRecord {
 	return node
 }
 
-// FirstID returns the first SumDBRecord ID from the query.
-// Returns a *NotFoundError when no SumDBRecord ID was found.
-func (_q *SumDBRecordQuery) FirstID(ctx context.Context) (id int, err error) {
+// FirstID returns the first Asset ID from the query.
+// Returns a *NotFoundError when no Asset ID was found.
+func (_q *AssetQuery) FirstID(ctx context.Context) (id int, err error) {
 	var ids []int
 	if ids, err = _q.Limit(1).IDs(setContextOp(ctx, _q.ctx, ent.OpQueryFirstID)); err != nil {
 		return
 	}
 	if len(ids) == 0 {
-		err = &NotFoundError{sumdbrecord.Label}
+		err = &NotFoundError{asset.Label}
 		return
 	}
 	return ids[0], nil
 }
 
 // FirstIDX is like FirstID, but panics if an error occurs.
-func (_q *SumDBRecordQuery) FirstIDX(ctx context.Context) int {
+func (_q *AssetQuery) FirstIDX(ctx context.Context) int {
 	id, err := _q.FirstID(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -153,10 +128,10 @@ func (_q *SumDBRecordQuery) FirstIDX(ctx context.Context) int {
 	return id
 }
 
-// Only returns a single SumDBRecord entity found by the query, ensuring it only returns one.
-// Returns a *NotSingularError when more than one SumDBRecord entity is found.
-// Returns a *NotFoundError when no SumDBRecord entities are found.
-func (_q *SumDBRecordQuery) Only(ctx context.Context) (*SumDBRecord, error) {
+// Only returns a single Asset entity found by the query, ensuring it only returns one.
+// Returns a *NotSingularError when more than one Asset entity is found.
+// Returns a *NotFoundError when no Asset entities are found.
+func (_q *AssetQuery) Only(ctx context.Context) (*Asset, error) {
 	nodes, err := _q.Limit(2).All(setContextOp(ctx, _q.ctx, ent.OpQueryOnly))
 	if err != nil {
 		return nil, err
@@ -165,14 +140,14 @@ func (_q *SumDBRecordQuery) Only(ctx context.Context) (*SumDBRecord, error) {
 	case 1:
 		return nodes[0], nil
 	case 0:
-		return nil, &NotFoundError{sumdbrecord.Label}
+		return nil, &NotFoundError{asset.Label}
 	default:
-		return nil, &NotSingularError{sumdbrecord.Label}
+		return nil, &NotSingularError{asset.Label}
 	}
 }
 
 // OnlyX is like Only, but panics if an error occurs.
-func (_q *SumDBRecordQuery) OnlyX(ctx context.Context) *SumDBRecord {
+func (_q *AssetQuery) OnlyX(ctx context.Context) *Asset {
 	node, err := _q.Only(ctx)
 	if err != nil {
 		panic(err)
@@ -180,10 +155,10 @@ func (_q *SumDBRecordQuery) OnlyX(ctx context.Context) *SumDBRecord {
 	return node
 }
 
-// OnlyID is like Only, but returns the only SumDBRecord ID in the query.
-// Returns a *NotSingularError when more than one SumDBRecord ID is found.
+// OnlyID is like Only, but returns the only Asset ID in the query.
+// Returns a *NotSingularError when more than one Asset ID is found.
 // Returns a *NotFoundError when no entities are found.
-func (_q *SumDBRecordQuery) OnlyID(ctx context.Context) (id int, err error) {
+func (_q *AssetQuery) OnlyID(ctx context.Context) (id int, err error) {
 	var ids []int
 	if ids, err = _q.Limit(2).IDs(setContextOp(ctx, _q.ctx, ent.OpQueryOnlyID)); err != nil {
 		return
@@ -192,15 +167,15 @@ func (_q *SumDBRecordQuery) OnlyID(ctx context.Context) (id int, err error) {
 	case 1:
 		id = ids[0]
 	case 0:
-		err = &NotFoundError{sumdbrecord.Label}
+		err = &NotFoundError{asset.Label}
 	default:
-		err = &NotSingularError{sumdbrecord.Label}
+		err = &NotSingularError{asset.Label}
 	}
 	return
 }
 
 // OnlyIDX is like OnlyID, but panics if an error occurs.
-func (_q *SumDBRecordQuery) OnlyIDX(ctx context.Context) int {
+func (_q *AssetQuery) OnlyIDX(ctx context.Context) int {
 	id, err := _q.OnlyID(ctx)
 	if err != nil {
 		panic(err)
@@ -208,18 +183,18 @@ func (_q *SumDBRecordQuery) OnlyIDX(ctx context.Context) int {
 	return id
 }
 
-// All executes the query and returns a list of SumDBRecords.
-func (_q *SumDBRecordQuery) All(ctx context.Context) ([]*SumDBRecord, error) {
+// All executes the query and returns a list of Assets.
+func (_q *AssetQuery) All(ctx context.Context) ([]*Asset, error) {
 	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryAll)
 	if err := _q.prepareQuery(ctx); err != nil {
 		return nil, err
 	}
-	qr := querierAll[[]*SumDBRecord, *SumDBRecordQuery]()
-	return withInterceptors[[]*SumDBRecord](ctx, _q, qr, _q.inters)
+	qr := querierAll[[]*Asset, *AssetQuery]()
+	return withInterceptors[[]*Asset](ctx, _q, qr, _q.inters)
 }
 
 // AllX is like All, but panics if an error occurs.
-func (_q *SumDBRecordQuery) AllX(ctx context.Context) []*SumDBRecord {
+func (_q *AssetQuery) AllX(ctx context.Context) []*Asset {
 	nodes, err := _q.All(ctx)
 	if err != nil {
 		panic(err)
@@ -227,20 +202,20 @@ func (_q *SumDBRecordQuery) AllX(ctx context.Context) []*SumDBRecord {
 	return nodes
 }
 
-// IDs executes the query and returns a list of SumDBRecord IDs.
-func (_q *SumDBRecordQuery) IDs(ctx context.Context) (ids []int, err error) {
+// IDs executes the query and returns a list of Asset IDs.
+func (_q *AssetQuery) IDs(ctx context.Context) (ids []int, err error) {
 	if _q.ctx.Unique == nil && _q.path != nil {
 		_q.Unique(true)
 	}
 	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryIDs)
-	if err = _q.Select(sumdbrecord.FieldID).Scan(ctx, &ids); err != nil {
+	if err = _q.Select(asset.FieldID).Scan(ctx, &ids); err != nil {
 		return nil, err
 	}
 	return ids, nil
 }
 
 // IDsX is like IDs, but panics if an error occurs.
-func (_q *SumDBRecordQuery) IDsX(ctx context.Context) []int {
+func (_q *AssetQuery) IDsX(ctx context.Context) []int {
 	ids, err := _q.IDs(ctx)
 	if err != nil {
 		panic(err)
@@ -249,16 +224,16 @@ func (_q *SumDBRecordQuery) IDsX(ctx context.Context) []int {
 }
 
 // Count returns the count of the given query.
-func (_q *SumDBRecordQuery) Count(ctx context.Context) (int, error) {
+func (_q *AssetQuery) Count(ctx context.Context) (int, error) {
 	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryCount)
 	if err := _q.prepareQuery(ctx); err != nil {
 		return 0, err
 	}
-	return withInterceptors[int](ctx, _q, querierCount[*SumDBRecordQuery](), _q.inters)
+	return withInterceptors[int](ctx, _q, querierCount[*AssetQuery](), _q.inters)
 }
 
 // CountX is like Count, but panics if an error occurs.
-func (_q *SumDBRecordQuery) CountX(ctx context.Context) int {
+func (_q *AssetQuery) CountX(ctx context.Context) int {
 	count, err := _q.Count(ctx)
 	if err != nil {
 		panic(err)
@@ -267,7 +242,7 @@ func (_q *SumDBRecordQuery) CountX(ctx context.Context) int {
 }
 
 // Exist returns true if the query has elements in the graph.
-func (_q *SumDBRecordQuery) Exist(ctx context.Context) (bool, error) {
+func (_q *AssetQuery) Exist(ctx context.Context) (bool, error) {
 	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryExist)
 	switch _, err := _q.FirstID(ctx); {
 	case IsNotFound(err):
@@ -280,7 +255,7 @@ func (_q *SumDBRecordQuery) Exist(ctx context.Context) (bool, error) {
 }
 
 // ExistX is like Exist, but panics if an error occurs.
-func (_q *SumDBRecordQuery) ExistX(ctx context.Context) bool {
+func (_q *AssetQuery) ExistX(ctx context.Context) bool {
 	exist, err := _q.Exist(ctx)
 	if err != nil {
 		panic(err)
@@ -288,45 +263,33 @@ func (_q *SumDBRecordQuery) ExistX(ctx context.Context) bool {
 	return exist
 }
 
-// Clone returns a duplicate of the SumDBRecordQuery builder, including all associated steps. It can be
+// Clone returns a duplicate of the AssetQuery builder, including all associated steps. It can be
 // used to prepare common query builders and use them differently after the clone is made.
-func (_q *SumDBRecordQuery) Clone() *SumDBRecordQuery {
+func (_q *AssetQuery) Clone() *AssetQuery {
 	if _q == nil {
 		return nil
 	}
-	return &SumDBRecordQuery{
-		config:     _q.config,
-		ctx:        _q.ctx.Clone(),
-		order:      append([]sumdbrecord.OrderOption{}, _q.order...),
-		inters:     append([]Interceptor{}, _q.inters...),
-		predicates: append([]predicate.SumDBRecord{}, _q.predicates...),
-		withAssets: _q.withAssets.Clone(),
-		withTree:   _q.withTree.Clone(),
+	return &AssetQuery{
+		config:           _q.config,
+		ctx:              _q.ctx.Clone(),
+		order:            append([]asset.OrderOption{}, _q.order...),
+		inters:           append([]Interceptor{}, _q.inters...),
+		predicates:       append([]predicate.Asset{}, _q.predicates...),
+		withSumdbRecords: _q.withSumdbRecords.Clone(),
 		// clone intermediate query.
 		sql:  _q.sql.Clone(),
 		path: _q.path,
 	}
 }
 
-// WithAssets tells the query-builder to eager-load the nodes that are connected to
-// the "assets" edge. The optional arguments are used to configure the query builder of the edge.
-func (_q *SumDBRecordQuery) WithAssets(opts ...func(*AssetQuery)) *SumDBRecordQuery {
-	query := (&AssetClient{config: _q.config}).Query()
+// WithSumdbRecords tells the query-builder to eager-load the nodes that are connected to
+// the "sumdb_records" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *AssetQuery) WithSumdbRecords(opts ...func(*SumDBRecordQuery)) *AssetQuery {
+	query := (&SumDBRecordClient{config: _q.config}).Query()
 	for _, opt := range opts {
 		opt(query)
 	}
-	_q.withAssets = query
-	return _q
-}
-
-// WithTree tells the query-builder to eager-load the nodes that are connected to
-// the "tree" edge. The optional arguments are used to configure the query builder of the edge.
-func (_q *SumDBRecordQuery) WithTree(opts ...func(*SumDBTreeQuery)) *SumDBRecordQuery {
-	query := (&SumDBTreeClient{config: _q.config}).Query()
-	for _, opt := range opts {
-		opt(query)
-	}
-	_q.withTree = query
+	_q.withSumdbRecords = query
 	return _q
 }
 
@@ -340,15 +303,15 @@ func (_q *SumDBRecordQuery) WithTree(opts ...func(*SumDBTreeQuery)) *SumDBRecord
 //		Count int `json:"count,omitempty"`
 //	}
 //
-//	client.SumDBRecord.Query().
-//		GroupBy(sumdbrecord.FieldCreatedAt).
+//	client.Asset.Query().
+//		GroupBy(asset.FieldCreatedAt).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
-func (_q *SumDBRecordQuery) GroupBy(field string, fields ...string) *SumDBRecordGroupBy {
+func (_q *AssetQuery) GroupBy(field string, fields ...string) *AssetGroupBy {
 	_q.ctx.Fields = append([]string{field}, fields...)
-	grbuild := &SumDBRecordGroupBy{build: _q}
+	grbuild := &AssetGroupBy{build: _q}
 	grbuild.flds = &_q.ctx.Fields
-	grbuild.label = sumdbrecord.Label
+	grbuild.label = asset.Label
 	grbuild.scan = grbuild.Scan
 	return grbuild
 }
@@ -362,23 +325,23 @@ func (_q *SumDBRecordQuery) GroupBy(field string, fields ...string) *SumDBRecord
 //		CreatedAt time.Time `json:"created_at,omitempty"`
 //	}
 //
-//	client.SumDBRecord.Query().
-//		Select(sumdbrecord.FieldCreatedAt).
+//	client.Asset.Query().
+//		Select(asset.FieldCreatedAt).
 //		Scan(ctx, &v)
-func (_q *SumDBRecordQuery) Select(fields ...string) *SumDBRecordSelect {
+func (_q *AssetQuery) Select(fields ...string) *AssetSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)
-	sbuild := &SumDBRecordSelect{SumDBRecordQuery: _q}
-	sbuild.label = sumdbrecord.Label
+	sbuild := &AssetSelect{AssetQuery: _q}
+	sbuild.label = asset.Label
 	sbuild.flds, sbuild.scan = &_q.ctx.Fields, sbuild.Scan
 	return sbuild
 }
 
-// Aggregate returns a SumDBRecordSelect configured with the given aggregations.
-func (_q *SumDBRecordQuery) Aggregate(fns ...AggregateFunc) *SumDBRecordSelect {
+// Aggregate returns a AssetSelect configured with the given aggregations.
+func (_q *AssetQuery) Aggregate(fns ...AggregateFunc) *AssetSelect {
 	return _q.Select().Aggregate(fns...)
 }
 
-func (_q *SumDBRecordQuery) prepareQuery(ctx context.Context) error {
+func (_q *AssetQuery) prepareQuery(ctx context.Context) error {
 	for _, inter := range _q.inters {
 		if inter == nil {
 			return fmt.Errorf("ent: uninitialized interceptor (forgotten import ent/runtime?)")
@@ -390,7 +353,7 @@ func (_q *SumDBRecordQuery) prepareQuery(ctx context.Context) error {
 		}
 	}
 	for _, f := range _q.ctx.Fields {
-		if !sumdbrecord.ValidColumn(f) {
+		if !asset.ValidColumn(f) {
 			return &ValidationError{Name: f, err: fmt.Errorf("ent: invalid field %q for query", f)}
 		}
 	}
@@ -404,27 +367,19 @@ func (_q *SumDBRecordQuery) prepareQuery(ctx context.Context) error {
 	return nil
 }
 
-func (_q *SumDBRecordQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*SumDBRecord, error) {
+func (_q *AssetQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Asset, error) {
 	var (
-		nodes       = []*SumDBRecord{}
-		withFKs     = _q.withFKs
+		nodes       = []*Asset{}
 		_spec       = _q.querySpec()
-		loadedTypes = [2]bool{
-			_q.withAssets != nil,
-			_q.withTree != nil,
+		loadedTypes = [1]bool{
+			_q.withSumdbRecords != nil,
 		}
 	)
-	if _q.withTree != nil {
-		withFKs = true
-	}
-	if withFKs {
-		_spec.Node.Columns = append(_spec.Node.Columns, sumdbrecord.ForeignKeys...)
-	}
 	_spec.ScanValues = func(columns []string) ([]any, error) {
-		return (*SumDBRecord).scanValues(nil, columns)
+		return (*Asset).scanValues(nil, columns)
 	}
 	_spec.Assign = func(columns []string, values []any) error {
-		node := &SumDBRecord{config: _q.config}
+		node := &Asset{config: _q.config}
 		nodes = append(nodes, node)
 		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
@@ -438,26 +393,20 @@ func (_q *SumDBRecordQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
-	if query := _q.withAssets; query != nil {
-		if err := _q.loadAssets(ctx, query, nodes,
-			func(n *SumDBRecord) { n.Edges.Assets = []*Asset{} },
-			func(n *SumDBRecord, e *Asset) { n.Edges.Assets = append(n.Edges.Assets, e) }); err != nil {
-			return nil, err
-		}
-	}
-	if query := _q.withTree; query != nil {
-		if err := _q.loadTree(ctx, query, nodes, nil,
-			func(n *SumDBRecord, e *SumDBTree) { n.Edges.Tree = e }); err != nil {
+	if query := _q.withSumdbRecords; query != nil {
+		if err := _q.loadSumdbRecords(ctx, query, nodes,
+			func(n *Asset) { n.Edges.SumdbRecords = []*SumDBRecord{} },
+			func(n *Asset, e *SumDBRecord) { n.Edges.SumdbRecords = append(n.Edges.SumdbRecords, e) }); err != nil {
 			return nil, err
 		}
 	}
 	return nodes, nil
 }
 
-func (_q *SumDBRecordQuery) loadAssets(ctx context.Context, query *AssetQuery, nodes []*SumDBRecord, init func(*SumDBRecord), assign func(*SumDBRecord, *Asset)) error {
+func (_q *AssetQuery) loadSumdbRecords(ctx context.Context, query *SumDBRecordQuery, nodes []*Asset, init func(*Asset), assign func(*Asset, *SumDBRecord)) error {
 	edgeIDs := make([]driver.Value, len(nodes))
-	byID := make(map[int]*SumDBRecord)
-	nids := make(map[int]map[*SumDBRecord]struct{})
+	byID := make(map[int]*Asset)
+	nids := make(map[int]map[*Asset]struct{})
 	for i, node := range nodes {
 		edgeIDs[i] = node.ID
 		byID[node.ID] = node
@@ -466,11 +415,11 @@ func (_q *SumDBRecordQuery) loadAssets(ctx context.Context, query *AssetQuery, n
 		}
 	}
 	query.Where(func(s *sql.Selector) {
-		joinT := sql.Table(sumdbrecord.AssetsTable)
-		s.Join(joinT).On(s.C(asset.FieldID), joinT.C(sumdbrecord.AssetsPrimaryKey[1]))
-		s.Where(sql.InValues(joinT.C(sumdbrecord.AssetsPrimaryKey[0]), edgeIDs...))
+		joinT := sql.Table(asset.SumdbRecordsTable)
+		s.Join(joinT).On(s.C(sumdbrecord.FieldID), joinT.C(asset.SumdbRecordsPrimaryKey[0]))
+		s.Where(sql.InValues(joinT.C(asset.SumdbRecordsPrimaryKey[1]), edgeIDs...))
 		columns := s.SelectedColumns()
-		s.Select(joinT.C(sumdbrecord.AssetsPrimaryKey[0]))
+		s.Select(joinT.C(asset.SumdbRecordsPrimaryKey[1]))
 		s.AppendSelect(columns...)
 		s.SetDistinct(false)
 	})
@@ -492,7 +441,7 @@ func (_q *SumDBRecordQuery) loadAssets(ctx context.Context, query *AssetQuery, n
 				outValue := int(values[0].(*sql.NullInt64).Int64)
 				inValue := int(values[1].(*sql.NullInt64).Int64)
 				if nids[inValue] == nil {
-					nids[inValue] = map[*SumDBRecord]struct{}{byID[outValue]: {}}
+					nids[inValue] = map[*Asset]struct{}{byID[outValue]: {}}
 					return assign(columns[1:], values[1:])
 				}
 				nids[inValue][byID[outValue]] = struct{}{}
@@ -500,14 +449,14 @@ func (_q *SumDBRecordQuery) loadAssets(ctx context.Context, query *AssetQuery, n
 			}
 		})
 	})
-	neighbors, err := withInterceptors[[]*Asset](ctx, query, qr, query.inters)
+	neighbors, err := withInterceptors[[]*SumDBRecord](ctx, query, qr, query.inters)
 	if err != nil {
 		return err
 	}
 	for _, n := range neighbors {
 		nodes, ok := nids[n.ID]
 		if !ok {
-			return fmt.Errorf(`unexpected "assets" node returned %v`, n.ID)
+			return fmt.Errorf(`unexpected "sumdb_records" node returned %v`, n.ID)
 		}
 		for kn := range nodes {
 			assign(kn, n)
@@ -515,40 +464,8 @@ func (_q *SumDBRecordQuery) loadAssets(ctx context.Context, query *AssetQuery, n
 	}
 	return nil
 }
-func (_q *SumDBRecordQuery) loadTree(ctx context.Context, query *SumDBTreeQuery, nodes []*SumDBRecord, init func(*SumDBRecord), assign func(*SumDBRecord, *SumDBTree)) error {
-	ids := make([]int, 0, len(nodes))
-	nodeids := make(map[int][]*SumDBRecord)
-	for i := range nodes {
-		if nodes[i].tree_id == nil {
-			continue
-		}
-		fk := *nodes[i].tree_id
-		if _, ok := nodeids[fk]; !ok {
-			ids = append(ids, fk)
-		}
-		nodeids[fk] = append(nodeids[fk], nodes[i])
-	}
-	if len(ids) == 0 {
-		return nil
-	}
-	query.Where(sumdbtree.IDIn(ids...))
-	neighbors, err := query.All(ctx)
-	if err != nil {
-		return err
-	}
-	for _, n := range neighbors {
-		nodes, ok := nodeids[n.ID]
-		if !ok {
-			return fmt.Errorf(`unexpected foreign-key "tree_id" returned %v`, n.ID)
-		}
-		for i := range nodes {
-			assign(nodes[i], n)
-		}
-	}
-	return nil
-}
 
-func (_q *SumDBRecordQuery) sqlCount(ctx context.Context) (int, error) {
+func (_q *AssetQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := _q.querySpec()
 	_spec.Node.Columns = _q.ctx.Fields
 	if len(_q.ctx.Fields) > 0 {
@@ -557,8 +474,8 @@ func (_q *SumDBRecordQuery) sqlCount(ctx context.Context) (int, error) {
 	return sqlgraph.CountNodes(ctx, _q.driver, _spec)
 }
 
-func (_q *SumDBRecordQuery) querySpec() *sqlgraph.QuerySpec {
-	_spec := sqlgraph.NewQuerySpec(sumdbrecord.Table, sumdbrecord.Columns, sqlgraph.NewFieldSpec(sumdbrecord.FieldID, field.TypeInt))
+func (_q *AssetQuery) querySpec() *sqlgraph.QuerySpec {
+	_spec := sqlgraph.NewQuerySpec(asset.Table, asset.Columns, sqlgraph.NewFieldSpec(asset.FieldID, field.TypeInt))
 	_spec.From = _q.sql
 	if unique := _q.ctx.Unique; unique != nil {
 		_spec.Unique = *unique
@@ -567,9 +484,9 @@ func (_q *SumDBRecordQuery) querySpec() *sqlgraph.QuerySpec {
 	}
 	if fields := _q.ctx.Fields; len(fields) > 0 {
 		_spec.Node.Columns = make([]string, 0, len(fields))
-		_spec.Node.Columns = append(_spec.Node.Columns, sumdbrecord.FieldID)
+		_spec.Node.Columns = append(_spec.Node.Columns, asset.FieldID)
 		for i := range fields {
-			if fields[i] != sumdbrecord.FieldID {
+			if fields[i] != asset.FieldID {
 				_spec.Node.Columns = append(_spec.Node.Columns, fields[i])
 			}
 		}
@@ -597,12 +514,12 @@ func (_q *SumDBRecordQuery) querySpec() *sqlgraph.QuerySpec {
 	return _spec
 }
 
-func (_q *SumDBRecordQuery) sqlQuery(ctx context.Context) *sql.Selector {
+func (_q *AssetQuery) sqlQuery(ctx context.Context) *sql.Selector {
 	builder := sql.Dialect(_q.driver.Dialect())
-	t1 := builder.Table(sumdbrecord.Table)
+	t1 := builder.Table(asset.Table)
 	columns := _q.ctx.Fields
 	if len(columns) == 0 {
-		columns = sumdbrecord.Columns
+		columns = asset.Columns
 	}
 	selector := builder.Select(t1.Columns(columns...)...).From(t1)
 	if _q.sql != nil {
@@ -629,28 +546,28 @@ func (_q *SumDBRecordQuery) sqlQuery(ctx context.Context) *sql.Selector {
 	return selector
 }
 
-// SumDBRecordGroupBy is the group-by builder for SumDBRecord entities.
-type SumDBRecordGroupBy struct {
+// AssetGroupBy is the group-by builder for Asset entities.
+type AssetGroupBy struct {
 	selector
-	build *SumDBRecordQuery
+	build *AssetQuery
 }
 
 // Aggregate adds the given aggregation functions to the group-by query.
-func (_g *SumDBRecordGroupBy) Aggregate(fns ...AggregateFunc) *SumDBRecordGroupBy {
+func (_g *AssetGroupBy) Aggregate(fns ...AggregateFunc) *AssetGroupBy {
 	_g.fns = append(_g.fns, fns...)
 	return _g
 }
 
 // Scan applies the selector query and scans the result into the given value.
-func (_g *SumDBRecordGroupBy) Scan(ctx context.Context, v any) error {
+func (_g *AssetGroupBy) Scan(ctx context.Context, v any) error {
 	ctx = setContextOp(ctx, _g.build.ctx, ent.OpQueryGroupBy)
 	if err := _g.build.prepareQuery(ctx); err != nil {
 		return err
 	}
-	return scanWithInterceptors[*SumDBRecordQuery, *SumDBRecordGroupBy](ctx, _g.build, _g, _g.build.inters, v)
+	return scanWithInterceptors[*AssetQuery, *AssetGroupBy](ctx, _g.build, _g, _g.build.inters, v)
 }
 
-func (_g *SumDBRecordGroupBy) sqlScan(ctx context.Context, root *SumDBRecordQuery, v any) error {
+func (_g *AssetGroupBy) sqlScan(ctx context.Context, root *AssetQuery, v any) error {
 	selector := root.sqlQuery(ctx).Select()
 	aggregation := make([]string, 0, len(_g.fns))
 	for _, fn := range _g.fns {
@@ -677,28 +594,28 @@ func (_g *SumDBRecordGroupBy) sqlScan(ctx context.Context, root *SumDBRecordQuer
 	return sql.ScanSlice(rows, v)
 }
 
-// SumDBRecordSelect is the builder for selecting fields of SumDBRecord entities.
-type SumDBRecordSelect struct {
-	*SumDBRecordQuery
+// AssetSelect is the builder for selecting fields of Asset entities.
+type AssetSelect struct {
+	*AssetQuery
 	selector
 }
 
 // Aggregate adds the given aggregation functions to the selector query.
-func (_s *SumDBRecordSelect) Aggregate(fns ...AggregateFunc) *SumDBRecordSelect {
+func (_s *AssetSelect) Aggregate(fns ...AggregateFunc) *AssetSelect {
 	_s.fns = append(_s.fns, fns...)
 	return _s
 }
 
 // Scan applies the selector query and scans the result into the given value.
-func (_s *SumDBRecordSelect) Scan(ctx context.Context, v any) error {
+func (_s *AssetSelect) Scan(ctx context.Context, v any) error {
 	ctx = setContextOp(ctx, _s.ctx, ent.OpQuerySelect)
 	if err := _s.prepareQuery(ctx); err != nil {
 		return err
 	}
-	return scanWithInterceptors[*SumDBRecordQuery, *SumDBRecordSelect](ctx, _s.SumDBRecordQuery, _s, _s.inters, v)
+	return scanWithInterceptors[*AssetQuery, *AssetSelect](ctx, _s.AssetQuery, _s, _s.inters, v)
 }
 
-func (_s *SumDBRecordSelect) sqlScan(ctx context.Context, root *SumDBRecordQuery, v any) error {
+func (_s *AssetSelect) sqlScan(ctx context.Context, root *AssetQuery, v any) error {
 	selector := root.sqlQuery(ctx)
 	aggregation := make([]string, 0, len(_s.fns))
 	for _, fn := range _s.fns {

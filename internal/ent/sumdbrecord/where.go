@@ -375,6 +375,29 @@ func DataLTE(v []byte) predicate.SumDBRecord {
 	return predicate.SumDBRecord(sql.FieldLTE(FieldData, v))
 }
 
+// HasAssets applies the HasEdge predicate on the "assets" edge.
+func HasAssets() predicate.SumDBRecord {
+	return predicate.SumDBRecord(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, false, AssetsTable, AssetsPrimaryKey...),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasAssetsWith applies the HasEdge predicate on the "assets" edge with a given conditions (other predicates).
+func HasAssetsWith(preds ...predicate.Asset) predicate.SumDBRecord {
+	return predicate.SumDBRecord(func(s *sql.Selector) {
+		step := newAssetsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // HasTree applies the HasEdge predicate on the "tree" edge.
 func HasTree() predicate.SumDBRecord {
 	return predicate.SumDBRecord(func(s *sql.Selector) {

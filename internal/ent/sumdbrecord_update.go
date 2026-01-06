@@ -11,6 +11,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/pseudomuto/pacman/internal/ent/asset"
 	"github.com/pseudomuto/pacman/internal/ent/predicate"
 	"github.com/pseudomuto/pacman/internal/ent/sumdbrecord"
 )
@@ -89,9 +90,45 @@ func (_u *SumDBRecordUpdate) SetData(v []byte) *SumDBRecordUpdate {
 	return _u
 }
 
+// AddAssetIDs adds the "assets" edge to the Asset entity by IDs.
+func (_u *SumDBRecordUpdate) AddAssetIDs(ids ...int) *SumDBRecordUpdate {
+	_u.mutation.AddAssetIDs(ids...)
+	return _u
+}
+
+// AddAssets adds the "assets" edges to the Asset entity.
+func (_u *SumDBRecordUpdate) AddAssets(v ...*Asset) *SumDBRecordUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddAssetIDs(ids...)
+}
+
 // Mutation returns the SumDBRecordMutation object of the builder.
 func (_u *SumDBRecordUpdate) Mutation() *SumDBRecordMutation {
 	return _u.mutation
+}
+
+// ClearAssets clears all "assets" edges to the Asset entity.
+func (_u *SumDBRecordUpdate) ClearAssets() *SumDBRecordUpdate {
+	_u.mutation.ClearAssets()
+	return _u
+}
+
+// RemoveAssetIDs removes the "assets" edge to Asset entities by IDs.
+func (_u *SumDBRecordUpdate) RemoveAssetIDs(ids ...int) *SumDBRecordUpdate {
+	_u.mutation.RemoveAssetIDs(ids...)
+	return _u
+}
+
+// RemoveAssets removes "assets" edges to Asset entities.
+func (_u *SumDBRecordUpdate) RemoveAssets(v ...*Asset) *SumDBRecordUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveAssetIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -178,6 +215,51 @@ func (_u *SumDBRecordUpdate) sqlSave(ctx context.Context) (_node int, err error)
 	if value, ok := _u.mutation.Data(); ok {
 		_spec.SetField(sumdbrecord.FieldData, field.TypeBytes, value)
 	}
+	if _u.mutation.AssetsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   sumdbrecord.AssetsTable,
+			Columns: sumdbrecord.AssetsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(asset.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedAssetsIDs(); len(nodes) > 0 && !_u.mutation.AssetsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   sumdbrecord.AssetsTable,
+			Columns: sumdbrecord.AssetsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(asset.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.AssetsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   sumdbrecord.AssetsTable,
+			Columns: sumdbrecord.AssetsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(asset.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{sumdbrecord.Label}
@@ -259,9 +341,45 @@ func (_u *SumDBRecordUpdateOne) SetData(v []byte) *SumDBRecordUpdateOne {
 	return _u
 }
 
+// AddAssetIDs adds the "assets" edge to the Asset entity by IDs.
+func (_u *SumDBRecordUpdateOne) AddAssetIDs(ids ...int) *SumDBRecordUpdateOne {
+	_u.mutation.AddAssetIDs(ids...)
+	return _u
+}
+
+// AddAssets adds the "assets" edges to the Asset entity.
+func (_u *SumDBRecordUpdateOne) AddAssets(v ...*Asset) *SumDBRecordUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddAssetIDs(ids...)
+}
+
 // Mutation returns the SumDBRecordMutation object of the builder.
 func (_u *SumDBRecordUpdateOne) Mutation() *SumDBRecordMutation {
 	return _u.mutation
+}
+
+// ClearAssets clears all "assets" edges to the Asset entity.
+func (_u *SumDBRecordUpdateOne) ClearAssets() *SumDBRecordUpdateOne {
+	_u.mutation.ClearAssets()
+	return _u
+}
+
+// RemoveAssetIDs removes the "assets" edge to Asset entities by IDs.
+func (_u *SumDBRecordUpdateOne) RemoveAssetIDs(ids ...int) *SumDBRecordUpdateOne {
+	_u.mutation.RemoveAssetIDs(ids...)
+	return _u
+}
+
+// RemoveAssets removes "assets" edges to Asset entities.
+func (_u *SumDBRecordUpdateOne) RemoveAssets(v ...*Asset) *SumDBRecordUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveAssetIDs(ids...)
 }
 
 // Where appends a list predicates to the SumDBRecordUpdate builder.
@@ -377,6 +495,51 @@ func (_u *SumDBRecordUpdateOne) sqlSave(ctx context.Context) (_node *SumDBRecord
 	}
 	if value, ok := _u.mutation.Data(); ok {
 		_spec.SetField(sumdbrecord.FieldData, field.TypeBytes, value)
+	}
+	if _u.mutation.AssetsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   sumdbrecord.AssetsTable,
+			Columns: sumdbrecord.AssetsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(asset.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedAssetsIDs(); len(nodes) > 0 && !_u.mutation.AssetsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   sumdbrecord.AssetsTable,
+			Columns: sumdbrecord.AssetsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(asset.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.AssetsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   sumdbrecord.AssetsTable,
+			Columns: sumdbrecord.AssetsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(asset.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	_node = &SumDBRecord{config: _u.config}
 	_spec.Assign = _node.assignValues

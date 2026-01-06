@@ -12,11 +12,6 @@ var Module = fx.Module(
 	fx.Provide(
 		NewSumDBPool,
 		fx.Annotate(
-			NewSumDBProxy,
-			fx.As(new(types.Router)),
-			fx.ResultTags(types.FXServerRouters),
-		),
-		fx.Annotate(
 			NewHandler,
 			fx.As(new(types.Router)),
 			fx.ResultTags(types.FXServerRouters),

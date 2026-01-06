@@ -75,6 +75,32 @@ var (
 			},
 		},
 	}
+	// AssetsColumns holds the columns for the "assets" table.
+	AssetsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "type", Type: field.TypeEnum, Enums: []string{"text", "archive"}},
+		{Name: "uri", Type: field.TypeString, Size: 2048},
+	}
+	// AssetsTable holds the schema information for the "assets" table.
+	AssetsTable = &schema.Table{
+		Name:       "assets",
+		Columns:    AssetsColumns,
+		PrimaryKey: []*schema.Column{AssetsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "asset_created_at",
+				Unique:  false,
+				Columns: []*schema.Column{AssetsColumns[1]},
+			},
+			{
+				Name:    "asset_updated_at",
+				Unique:  false,
+				Columns: []*schema.Column{AssetsColumns[2]},
+			},
+		},
+	}
 	// SumDbHashesColumns holds the columns for the "sum_db_hashes" table.
 	SumDbHashesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
@@ -200,13 +226,40 @@ var (
 			},
 		},
 	}
+	// SumDbRecordAssetsColumns holds the columns for the "sum_db_record_assets" table.
+	SumDbRecordAssetsColumns = []*schema.Column{
+		{Name: "sum_db_record_id", Type: field.TypeInt},
+		{Name: "asset_id", Type: field.TypeInt},
+	}
+	// SumDbRecordAssetsTable holds the schema information for the "sum_db_record_assets" table.
+	SumDbRecordAssetsTable = &schema.Table{
+		Name:       "sum_db_record_assets",
+		Columns:    SumDbRecordAssetsColumns,
+		PrimaryKey: []*schema.Column{SumDbRecordAssetsColumns[0], SumDbRecordAssetsColumns[1]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "sum_db_record_assets_sum_db_record_id",
+				Columns:    []*schema.Column{SumDbRecordAssetsColumns[0]},
+				RefColumns: []*schema.Column{SumDbRecordsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "sum_db_record_assets_asset_id",
+				Columns:    []*schema.Column{SumDbRecordAssetsColumns[1]},
+				RefColumns: []*schema.Column{AssetsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+		},
+	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
 		ArtifactsTable,
 		ArtifactVersionsTable,
+		AssetsTable,
 		SumDbHashesTable,
 		SumDbRecordsTable,
 		SumDbTreesTable,
+		SumDbRecordAssetsTable,
 	}
 )
 
@@ -214,4 +267,6 @@ func init() {
 	ArtifactVersionsTable.ForeignKeys[0].RefTable = ArtifactsTable
 	SumDbHashesTable.ForeignKeys[0].RefTable = SumDbTreesTable
 	SumDbRecordsTable.ForeignKeys[0].RefTable = SumDbTreesTable
+	SumDbRecordAssetsTable.ForeignKeys[0].RefTable = SumDbRecordsTable
+	SumDbRecordAssetsTable.ForeignKeys[1].RefTable = AssetsTable
 }

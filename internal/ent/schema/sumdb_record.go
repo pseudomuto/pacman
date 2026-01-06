@@ -34,6 +34,7 @@ func (SumDBRecord) Indexes() []ent.Index {
 
 func (SumDBRecord) Edges() []ent.Edge {
 	return []ent.Edge{
+		edge.To("assets", Asset.Type),
 		edge.
 			From("tree", SumDBTree.Type).
 			Ref("records").

@@ -39,11 +39,22 @@ type SumDBRecord struct {
 
 // SumDBRecordEdges holds the relations/edges for other nodes in the graph.
 type SumDBRecordEdges struct {
+	// Assets holds the value of the assets edge.
+	Assets []*Asset `json:"assets,omitempty"`
 	// Tree holds the value of the tree edge.
 	Tree *SumDBTree `json:"tree,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [1]bool
+	loadedTypes [2]bool
+}
+
+// AssetsOrErr returns the Assets value or an error if the edge
+// was not loaded in eager-loading.
+func (e SumDBRecordEdges) AssetsOrErr() ([]*Asset, error) {
+	if e.loadedTypes[0] {
+		return e.Assets, nil
+	}
+	return nil, &NotLoadedError{edge: "assets"}
 }
 
 // TreeOrErr returns the Tree value or an error if the edge
@@ -51,7 +62,7 @@ type SumDBRecordEdges struct {
 func (e SumDBRecordEdges) TreeOrErr() (*SumDBTree, error) {
 	if e.Tree != nil {
 		return e.Tree, nil
-	} else if e.loadedTypes[0] {
+	} else if e.loadedTypes[1] {
 		return nil, &NotFoundError{label: sumdbtree.Label}
 	}
 	return nil, &NotLoadedError{edge: "tree"}
@@ -147,6 +158,11 @@ func (_m *SumDBRecord) assignValues(columns []string, values []any) error {
 // This includes values selected through modifiers, order, etc.
 func (_m *SumDBRecord) Value(name string) (ent.Value, error) {
 	return _m.selectValues.Get(name)
+}
+
+// QueryAssets queries the "assets" edge of the SumDBRecord entity.
+func (_m *SumDBRecord) QueryAssets() *AssetQuery {
+	return NewSumDBRecordClient(_m.config).QueryAssets(_m)
 }
 
 // QueryTree queries the "tree" edge of the SumDBRecord entity.

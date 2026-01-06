@@ -7,6 +7,7 @@ import (
 
 	"github.com/pseudomuto/pacman/internal/ent/artifact"
 	"github.com/pseudomuto/pacman/internal/ent/artifactversion"
+	"github.com/pseudomuto/pacman/internal/ent/asset"
 	"github.com/pseudomuto/pacman/internal/ent/schema"
 	"github.com/pseudomuto/pacman/internal/ent/sumdbhash"
 	"github.com/pseudomuto/pacman/internal/ent/sumdbrecord"
@@ -59,6 +60,25 @@ func init() {
 	artifactversionDescURI := artifactversionFields[1].Descriptor()
 	// artifactversion.URIValidator is a validator for the "uri" field. It is called by the builders before save.
 	artifactversion.URIValidator = artifactversionDescURI.Validators[0].(func(string) error)
+	assetMixin := schema.Asset{}.Mixin()
+	assetMixinFields0 := assetMixin[0].Fields()
+	_ = assetMixinFields0
+	assetFields := schema.Asset{}.Fields()
+	_ = assetFields
+	// assetDescCreatedAt is the schema descriptor for created_at field.
+	assetDescCreatedAt := assetMixinFields0[0].Descriptor()
+	// asset.DefaultCreatedAt holds the default value on creation for the created_at field.
+	asset.DefaultCreatedAt = assetDescCreatedAt.Default.(func() time.Time)
+	// assetDescUpdatedAt is the schema descriptor for updated_at field.
+	assetDescUpdatedAt := assetMixinFields0[1].Descriptor()
+	// asset.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	asset.DefaultUpdatedAt = assetDescUpdatedAt.Default.(func() time.Time)
+	// asset.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	asset.UpdateDefaultUpdatedAt = assetDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// assetDescURI is the schema descriptor for uri field.
+	assetDescURI := assetFields[1].Descriptor()
+	// asset.URIValidator is a validator for the "uri" field. It is called by the builders before save.
+	asset.URIValidator = assetDescURI.Validators[0].(func(string) error)
 	sumdbhashMixin := schema.SumDBHash{}.Mixin()
 	sumdbhashMixinFields0 := sumdbhashMixin[0].Fields()
 	_ = sumdbhashMixinFields0

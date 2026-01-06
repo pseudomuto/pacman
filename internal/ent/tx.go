@@ -16,6 +16,8 @@ type Tx struct {
 	Artifact *ArtifactClient
 	// ArtifactVersion is the client for interacting with the ArtifactVersion builders.
 	ArtifactVersion *ArtifactVersionClient
+	// Asset is the client for interacting with the Asset builders.
+	Asset *AssetClient
 	// SumDBHash is the client for interacting with the SumDBHash builders.
 	SumDBHash *SumDBHashClient
 	// SumDBRecord is the client for interacting with the SumDBRecord builders.
@@ -155,6 +157,7 @@ func (tx *Tx) Client() *Client {
 func (tx *Tx) init() {
 	tx.Artifact = NewArtifactClient(tx.config)
 	tx.ArtifactVersion = NewArtifactVersionClient(tx.config)
+	tx.Asset = NewAssetClient(tx.config)
 	tx.SumDBHash = NewSumDBHashClient(tx.config)
 	tx.SumDBRecord = NewSumDBRecordClient(tx.config)
 	tx.SumDBTree = NewSumDBTreeClient(tx.config)

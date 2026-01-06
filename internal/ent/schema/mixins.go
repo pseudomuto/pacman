@@ -17,11 +17,11 @@ func (TimeMixin) Fields() []ent.Field {
 	return []ent.Field{
 		field.Time("created_at").
 			Immutable().
-			Default(time.Now).
+			Default(func() time.Time { return time.Now().UTC() }).
 			Comment("When this object was initially created"),
 		field.Time("updated_at").
-			Default(time.Now).
-			UpdateDefault(time.Now).
+			Default(func() time.Time { return time.Now().UTC() }).
+			UpdateDefault(func() time.Time { return time.Now().UTC() }).
 			Comment("The last time this object was modified"),
 	}
 }
