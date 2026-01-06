@@ -26,10 +26,17 @@ const (
 	FieldVersion = "version"
 	// FieldData holds the string denoting the data field in the database.
 	FieldData = "data"
+	// EdgeAssets holds the string denoting the assets edge name in mutations.
+	EdgeAssets = "assets"
 	// EdgeTree holds the string denoting the tree edge name in mutations.
 	EdgeTree = "tree"
 	// Table holds the table name of the sumdbrecord in the database.
 	Table = "sum_db_records"
+	// AssetsTable is the table that holds the assets relation/edge. The primary key declared below.
+	AssetsTable = "sum_db_record_assets"
+	// AssetsInverseTable is the table name for the Asset entity.
+	// It exists in this package in order to avoid circular dependency with the "asset" package.
+	AssetsInverseTable = "assets"
 	// TreeTable is the table that holds the tree relation/edge.
 	TreeTable = "sum_db_records"
 	// TreeInverseTable is the table name for the SumDBTree entity.
@@ -55,6 +62,12 @@ var Columns = []string{
 var ForeignKeys = []string{
 	"tree_id",
 }
+
+var (
+	// AssetsPrimaryKey and AssetsColumn2 are the table columns denoting the
+	// primary key for the assets relation (M2M).
+	AssetsPrimaryKey = []string{"sum_db_record_id", "asset_id"}
+)
 
 // ValidColumn reports if the column name is valid (part of the table columns).
 func ValidColumn(column string) bool {
@@ -117,11 +130,32 @@ func ByVersion(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldVersion, opts...).ToFunc()
 }
 
+// ByAssetsCount orders the results by assets count.
+func ByAssetsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newAssetsStep(), opts...)
+	}
+}
+
+// ByAssets orders the results by assets terms.
+func ByAssets(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newAssetsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
 // ByTreeField orders the results by tree field.
 func ByTreeField(field string, opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
 		sqlgraph.OrderByNeighborTerms(s, newTreeStep(), sql.OrderByField(field, opts...))
 	}
+}
+func newAssetsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(AssetsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2M, false, AssetsTable, AssetsPrimaryKey...),
+	)
 }
 func newTreeStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(

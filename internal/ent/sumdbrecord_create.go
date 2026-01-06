@@ -11,6 +11,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/pseudomuto/pacman/internal/ent/asset"
 	"github.com/pseudomuto/pacman/internal/ent/sumdbrecord"
 	"github.com/pseudomuto/pacman/internal/ent/sumdbtree"
 )
@@ -73,6 +74,21 @@ func (_c *SumDBRecordCreate) SetVersion(v string) *SumDBRecordCreate {
 func (_c *SumDBRecordCreate) SetData(v []byte) *SumDBRecordCreate {
 	_c.mutation.SetData(v)
 	return _c
+}
+
+// AddAssetIDs adds the "assets" edge to the Asset entity by IDs.
+func (_c *SumDBRecordCreate) AddAssetIDs(ids ...int) *SumDBRecordCreate {
+	_c.mutation.AddAssetIDs(ids...)
+	return _c
+}
+
+// AddAssets adds the "assets" edges to the Asset entity.
+func (_c *SumDBRecordCreate) AddAssets(v ...*Asset) *SumDBRecordCreate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddAssetIDs(ids...)
 }
 
 // SetTreeID sets the "tree" edge to the SumDBTree entity by ID.
@@ -214,6 +230,22 @@ func (_c *SumDBRecordCreate) createSpec() (*SumDBRecord, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.Data(); ok {
 		_spec.SetField(sumdbrecord.FieldData, field.TypeBytes, value)
 		_node.Data = value
+	}
+	if nodes := _c.mutation.AssetsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   sumdbrecord.AssetsTable,
+			Columns: sumdbrecord.AssetsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(asset.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
 	}
 	if nodes := _c.mutation.TreeIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{

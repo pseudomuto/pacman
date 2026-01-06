@@ -17,6 +17,7 @@ require (
 	github.com/mattn/go-sqlite3 v1.14.17
 	github.com/oapi-codegen/runtime v1.1.2
 	github.com/prometheus/client_golang v1.23.2
+	github.com/pseudomuto/goproxy v0.1.0
 	github.com/pseudomuto/sumdb v0.1.1
 	github.com/stretchr/testify v1.11.1
 	github.com/urfave/cli/v3 v3.6.1

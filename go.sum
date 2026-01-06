@@ -292,6 +292,8 @@ github.com/prometheus/common v0.66.1 h1:h5E0h5/Y8niHc5DlaLlWLArTQI7tMrsfQjHV+d9Z
 github.com/prometheus/common v0.66.1/go.mod h1:gcaUsgf3KfRSwHY4dIMXLPV0K/Wg1oZ8+SbZk/HH/dA=
 github.com/prometheus/procfs v0.16.1 h1:hZ15bTNuirocR6u0JZ6BAHHmwS1p8B4P6MRqxtzMyRg=
 github.com/prometheus/procfs v0.16.1/go.mod h1:teAbpZRB1iIAJYREa1LsoWUXykVXA1KlTmWl8x/U+Is=
+github.com/pseudomuto/goproxy v0.1.0 h1:euuPryybviOESAir1uj2mS0FmNAPxRKcr5Rr1M1qEC8=
+github.com/pseudomuto/goproxy v0.1.0/go.mod h1:ab+0qSJZAzIWZdpYgqMgg3wP6ntz/JjxgumEgTY0MlA=
 github.com/pseudomuto/sumdb v0.1.1 h1:qdneyWcXSbz0FRO0/Xnm5OtMEpkpUJrO5aAO1U9QDt8=
 github.com/pseudomuto/sumdb v0.1.1/go.mod h1:gp5eJHaOojqUkliCuElEWVRw3ZrPUFcruVCQQL+ifhY=
 github.com/quic-go/qpack v0.5.1 h1:giqksBPnT/HDtZ6VhtFKgoLOWmlyo9Ei6u9PqzIMbhI=
