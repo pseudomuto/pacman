@@ -56,7 +56,10 @@ func main() {
 			}
 
 			app := fx.New(
-				fx.Supply(config.ConfigFilePath(cmd.String("config"))),
+				fx.Supply(
+					fx.Annotate(ctx, fx.As(new(context.Context))),
+					config.ConfigFilePath(cmd.String("config")),
+				),
 				fx.Provide(
 					slog.Default,
 					func() *prometheus.Registry {

@@ -15,12 +15,13 @@ type (
 
 	// Config holds the configuration for the clickhouse-api service.
 	Config struct {
-		Addr        string   `yaml:"addr"`
-		MetricsAddr string   `yaml:"metricsAddr"`
-		Debug       bool     `yaml:"debug"`
-		DB          Database `yaml:"db"`
-		Go          Go       `yaml:"go"`
-		CryptoKey   string   `yaml:"cryptoKey"`
+		Addr           string   `yaml:"addr"`
+		MetricsAddr    string   `yaml:"metricsAddr"`
+		Debug          bool     `yaml:"debug"`
+		DB             Database `yaml:"db"`
+		Go             Go       `yaml:"go"`
+		CryptoKey      string   `yaml:"cryptoKey"`
+		StorageBuckets []string `yaml:"storageBuckets"`
 	}
 
 	Database struct {
