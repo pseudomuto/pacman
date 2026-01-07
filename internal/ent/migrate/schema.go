@@ -8,6 +8,43 @@ import (
 )
 
 var (
+	// ArchivesColumns holds the columns for the "archives" table.
+	ArchivesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "type", Type: field.TypeEnum, Enums: []string{"gomod"}},
+		{Name: "coordinate", Type: field.TypeString, Size: 200},
+		{Name: "assets", Type: field.TypeJSON},
+	}
+	// ArchivesTable holds the schema information for the "archives" table.
+	ArchivesTable = &schema.Table{
+		Name:       "archives",
+		Columns:    ArchivesColumns,
+		PrimaryKey: []*schema.Column{ArchivesColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "archive_created_at",
+				Unique:  false,
+				Columns: []*schema.Column{ArchivesColumns[1]},
+			},
+			{
+				Name:    "archive_updated_at",
+				Unique:  false,
+				Columns: []*schema.Column{ArchivesColumns[2]},
+			},
+			{
+				Name:    "archive_type",
+				Unique:  false,
+				Columns: []*schema.Column{ArchivesColumns[3]},
+			},
+			{
+				Name:    "archive_type_coordinate",
+				Unique:  true,
+				Columns: []*schema.Column{ArchivesColumns[3], ArchivesColumns[4]},
+			},
+		},
+	}
 	// ArtifactsColumns holds the columns for the "artifacts" table.
 	ArtifactsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
@@ -253,6 +290,7 @@ var (
 	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
+		ArchivesTable,
 		ArtifactsTable,
 		ArtifactVersionsTable,
 		AssetsTable,

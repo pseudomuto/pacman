@@ -12,10 +12,12 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"github.com/pseudomuto/pacman/internal/crypto"
+	"github.com/pseudomuto/pacman/internal/ent/archive"
 	"github.com/pseudomuto/pacman/internal/ent/artifact"
 	"github.com/pseudomuto/pacman/internal/ent/artifactversion"
 	"github.com/pseudomuto/pacman/internal/ent/asset"
 	"github.com/pseudomuto/pacman/internal/ent/predicate"
+	"github.com/pseudomuto/pacman/internal/ent/schema"
 	"github.com/pseudomuto/pacman/internal/ent/sumdbhash"
 	"github.com/pseudomuto/pacman/internal/ent/sumdbrecord"
 	"github.com/pseudomuto/pacman/internal/ent/sumdbtree"
@@ -31,6 +33,7 @@ const (
 	OpUpdateOne = ent.OpUpdateOne
 
 	// Node types.
+	TypeArchive         = "Archive"
 	TypeArtifact        = "Artifact"
 	TypeArtifactVersion = "ArtifactVersion"
 	TypeAsset           = "Asset"
@@ -38,6 +41,564 @@ const (
 	TypeSumDBRecord     = "SumDBRecord"
 	TypeSumDBTree       = "SumDBTree"
 )
+
+// ArchiveMutation represents an operation that mutates the Archive nodes in the graph.
+type ArchiveMutation struct {
+	config
+	op            Op
+	typ           string
+	id            *int
+	created_at    *time.Time
+	updated_at    *time.Time
+	_type         *types.ArchiveType
+	coordinate    *string
+	assets        *[]schema.AssetURL
+	appendassets  []schema.AssetURL
+	clearedFields map[string]struct{}
+	done          bool
+	oldValue      func(context.Context) (*Archive, error)
+	predicates    []predicate.Archive
+}
+
+var _ ent.Mutation = (*ArchiveMutation)(nil)
+
+// archiveOption allows management of the mutation configuration using functional options.
+type archiveOption func(*ArchiveMutation)
+
+// newArchiveMutation creates new mutation for the Archive entity.
+func newArchiveMutation(c config, op Op, opts ...archiveOption) *ArchiveMutation {
+	m := &ArchiveMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeArchive,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withArchiveID sets the ID field of the mutation.
+func withArchiveID(id int) archiveOption {
+	return func(m *ArchiveMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *Archive
+		)
+		m.oldValue = func(ctx context.Context) (*Archive, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().Archive.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withArchive sets the old Archive of the mutation.
+func withArchive(node *Archive) archiveOption {
+	return func(m *ArchiveMutation) {
+		m.oldValue = func(context.Context) (*Archive, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m ArchiveMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m ArchiveMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *ArchiveMutation) ID() (id int, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *ArchiveMutation) IDs(ctx context.Context) ([]int, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().Archive.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *ArchiveMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *ArchiveMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the Archive entity.
+// If the Archive object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ArchiveMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *ArchiveMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (m *ArchiveMutation) SetUpdatedAt(t time.Time) {
+	m.updated_at = &t
+}
+
+// UpdatedAt returns the value of the "updated_at" field in the mutation.
+func (m *ArchiveMutation) UpdatedAt() (r time.Time, exists bool) {
+	v := m.updated_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdatedAt returns the old "updated_at" field's value of the Archive entity.
+// If the Archive object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ArchiveMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdatedAt: %w", err)
+	}
+	return oldValue.UpdatedAt, nil
+}
+
+// ResetUpdatedAt resets all changes to the "updated_at" field.
+func (m *ArchiveMutation) ResetUpdatedAt() {
+	m.updated_at = nil
+}
+
+// SetType sets the "type" field.
+func (m *ArchiveMutation) SetType(tt types.ArchiveType) {
+	m._type = &tt
+}
+
+// GetType returns the value of the "type" field in the mutation.
+func (m *ArchiveMutation) GetType() (r types.ArchiveType, exists bool) {
+	v := m._type
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldType returns the old "type" field's value of the Archive entity.
+// If the Archive object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ArchiveMutation) OldType(ctx context.Context) (v types.ArchiveType, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldType is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldType requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldType: %w", err)
+	}
+	return oldValue.Type, nil
+}
+
+// ResetType resets all changes to the "type" field.
+func (m *ArchiveMutation) ResetType() {
+	m._type = nil
+}
+
+// SetCoordinate sets the "coordinate" field.
+func (m *ArchiveMutation) SetCoordinate(s string) {
+	m.coordinate = &s
+}
+
+// Coordinate returns the value of the "coordinate" field in the mutation.
+func (m *ArchiveMutation) Coordinate() (r string, exists bool) {
+	v := m.coordinate
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCoordinate returns the old "coordinate" field's value of the Archive entity.
+// If the Archive object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ArchiveMutation) OldCoordinate(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCoordinate is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCoordinate requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCoordinate: %w", err)
+	}
+	return oldValue.Coordinate, nil
+}
+
+// ResetCoordinate resets all changes to the "coordinate" field.
+func (m *ArchiveMutation) ResetCoordinate() {
+	m.coordinate = nil
+}
+
+// SetAssets sets the "assets" field.
+func (m *ArchiveMutation) SetAssets(su []schema.AssetURL) {
+	m.assets = &su
+	m.appendassets = nil
+}
+
+// Assets returns the value of the "assets" field in the mutation.
+func (m *ArchiveMutation) Assets() (r []schema.AssetURL, exists bool) {
+	v := m.assets
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldAssets returns the old "assets" field's value of the Archive entity.
+// If the Archive object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ArchiveMutation) OldAssets(ctx context.Context) (v []schema.AssetURL, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldAssets is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldAssets requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldAssets: %w", err)
+	}
+	return oldValue.Assets, nil
+}
+
+// AppendAssets adds su to the "assets" field.
+func (m *ArchiveMutation) AppendAssets(su []schema.AssetURL) {
+	m.appendassets = append(m.appendassets, su...)
+}
+
+// AppendedAssets returns the list of values that were appended to the "assets" field in this mutation.
+func (m *ArchiveMutation) AppendedAssets() ([]schema.AssetURL, bool) {
+	if len(m.appendassets) == 0 {
+		return nil, false
+	}
+	return m.appendassets, true
+}
+
+// ResetAssets resets all changes to the "assets" field.
+func (m *ArchiveMutation) ResetAssets() {
+	m.assets = nil
+	m.appendassets = nil
+}
+
+// Where appends a list predicates to the ArchiveMutation builder.
+func (m *ArchiveMutation) Where(ps ...predicate.Archive) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the ArchiveMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *ArchiveMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.Archive, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *ArchiveMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *ArchiveMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (Archive).
+func (m *ArchiveMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *ArchiveMutation) Fields() []string {
+	fields := make([]string, 0, 5)
+	if m.created_at != nil {
+		fields = append(fields, archive.FieldCreatedAt)
+	}
+	if m.updated_at != nil {
+		fields = append(fields, archive.FieldUpdatedAt)
+	}
+	if m._type != nil {
+		fields = append(fields, archive.FieldType)
+	}
+	if m.coordinate != nil {
+		fields = append(fields, archive.FieldCoordinate)
+	}
+	if m.assets != nil {
+		fields = append(fields, archive.FieldAssets)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *ArchiveMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case archive.FieldCreatedAt:
+		return m.CreatedAt()
+	case archive.FieldUpdatedAt:
+		return m.UpdatedAt()
+	case archive.FieldType:
+		return m.GetType()
+	case archive.FieldCoordinate:
+		return m.Coordinate()
+	case archive.FieldAssets:
+		return m.Assets()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *ArchiveMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case archive.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case archive.FieldUpdatedAt:
+		return m.OldUpdatedAt(ctx)
+	case archive.FieldType:
+		return m.OldType(ctx)
+	case archive.FieldCoordinate:
+		return m.OldCoordinate(ctx)
+	case archive.FieldAssets:
+		return m.OldAssets(ctx)
+	}
+	return nil, fmt.Errorf("unknown Archive field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *ArchiveMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case archive.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case archive.FieldUpdatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdatedAt(v)
+		return nil
+	case archive.FieldType:
+		v, ok := value.(types.ArchiveType)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetType(v)
+		return nil
+	case archive.FieldCoordinate:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCoordinate(v)
+		return nil
+	case archive.FieldAssets:
+		v, ok := value.([]schema.AssetURL)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetAssets(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Archive field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *ArchiveMutation) AddedFields() []string {
+	return nil
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *ArchiveMutation) AddedField(name string) (ent.Value, bool) {
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *ArchiveMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown Archive numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *ArchiveMutation) ClearedFields() []string {
+	return nil
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *ArchiveMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *ArchiveMutation) ClearField(name string) error {
+	return fmt.Errorf("unknown Archive nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *ArchiveMutation) ResetField(name string) error {
+	switch name {
+	case archive.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case archive.FieldUpdatedAt:
+		m.ResetUpdatedAt()
+		return nil
+	case archive.FieldType:
+		m.ResetType()
+		return nil
+	case archive.FieldCoordinate:
+		m.ResetCoordinate()
+		return nil
+	case archive.FieldAssets:
+		m.ResetAssets()
+		return nil
+	}
+	return fmt.Errorf("unknown Archive field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *ArchiveMutation) AddedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *ArchiveMutation) AddedIDs(name string) []ent.Value {
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *ArchiveMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *ArchiveMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *ArchiveMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *ArchiveMutation) EdgeCleared(name string) bool {
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *ArchiveMutation) ClearEdge(name string) error {
+	return fmt.Errorf("unknown Archive unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *ArchiveMutation) ResetEdge(name string) error {
+	return fmt.Errorf("unknown Archive edge %s", name)
+}
 
 // ArtifactMutation represents an operation that mutates the Artifact nodes in the graph.
 type ArtifactMutation struct {

@@ -5,6 +5,7 @@ package ent
 import (
 	"time"
 
+	"github.com/pseudomuto/pacman/internal/ent/archive"
 	"github.com/pseudomuto/pacman/internal/ent/artifact"
 	"github.com/pseudomuto/pacman/internal/ent/artifactversion"
 	"github.com/pseudomuto/pacman/internal/ent/asset"
@@ -18,6 +19,25 @@ import (
 // (default values, validators, hooks and policies) and stitches it
 // to their package variables.
 func init() {
+	archiveMixin := schema.Archive{}.Mixin()
+	archiveMixinFields0 := archiveMixin[0].Fields()
+	_ = archiveMixinFields0
+	archiveFields := schema.Archive{}.Fields()
+	_ = archiveFields
+	// archiveDescCreatedAt is the schema descriptor for created_at field.
+	archiveDescCreatedAt := archiveMixinFields0[0].Descriptor()
+	// archive.DefaultCreatedAt holds the default value on creation for the created_at field.
+	archive.DefaultCreatedAt = archiveDescCreatedAt.Default.(func() time.Time)
+	// archiveDescUpdatedAt is the schema descriptor for updated_at field.
+	archiveDescUpdatedAt := archiveMixinFields0[1].Descriptor()
+	// archive.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	archive.DefaultUpdatedAt = archiveDescUpdatedAt.Default.(func() time.Time)
+	// archive.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	archive.UpdateDefaultUpdatedAt = archiveDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// archiveDescCoordinate is the schema descriptor for coordinate field.
+	archiveDescCoordinate := archiveFields[1].Descriptor()
+	// archive.CoordinateValidator is a validator for the "coordinate" field. It is called by the builders before save.
+	archive.CoordinateValidator = archiveDescCoordinate.Validators[0].(func(string) error)
 	artifactMixin := schema.Artifact{}.Mixin()
 	artifactMixinFields0 := artifactMixin[0].Fields()
 	_ = artifactMixinFields0

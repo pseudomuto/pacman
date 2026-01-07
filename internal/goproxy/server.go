@@ -4,6 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/pseudomuto/goproxy"
 	"github.com/pseudomuto/pacman/internal/ent"
+	"github.com/pseudomuto/pacman/internal/storage"
 	"github.com/pseudomuto/pacman/internal/types"
 	"go.uber.org/fx"
 )
@@ -24,12 +25,15 @@ type (
 
 func NewServerPool(db *ent.Client, trees []*ent.SumDBTree) (ServerPool, error) {
 	var pool ServerPool
-	pool.Routers = make([]types.Router, len(trees))
+	pool.Routers = make([]types.Router, len(trees)+1)
 	pool.Servers = make([]*Server, len(trees))
+
+	up := NewUpstreamProxy(db, ReaderFunc(storage.Read))
+	pool.Routers[0] = up
 
 	for i := range trees {
 		svr := NewServer(db, trees[i])
-		pool.Routers[i] = svr
+		pool.Routers[i+1] = svr
 		pool.Servers[i] = svr
 	}
 

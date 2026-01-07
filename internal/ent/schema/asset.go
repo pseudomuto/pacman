@@ -7,9 +7,16 @@ import (
 	"github.com/pseudomuto/pacman/internal/types"
 )
 
-type Asset struct {
-	ent.Schema
-}
+type (
+	Asset struct {
+		ent.Schema
+	}
+
+	AssetURL struct {
+		Type types.AssetType `json:"type"`
+		URL  string          `json:"url"`
+	}
+)
 
 func (Asset) Mixin() []ent.Mixin {
 	return []ent.Mixin{TimeMixin{}}
