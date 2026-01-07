@@ -6,6 +6,9 @@ import (
 	"entgo.io/ent/dialect/sql"
 )
 
+// Archive is the predicate function for archive builders.
+type Archive func(*sql.Selector)
+
 // Artifact is the predicate function for artifact builders.
 type Artifact func(*sql.Selector)
 

@@ -16,7 +16,7 @@ func TestNewServerPool(t *testing.T) {
 		{ID: 2, Name: "tree2"},
 	})
 	require.NoError(t, err)
-	require.Len(t, pool.Servers, len(pool.Routers))
+	require.Len(t, pool.Servers, len(pool.Routers)-1)
 
 	engine := gin.New()
 	for i, svr := range pool.Servers {

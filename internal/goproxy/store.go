@@ -23,6 +23,10 @@ type (
 	Reader interface {
 		Read(context.Context, io.Writer, string) error
 	}
+
+	reader struct {
+		fn func(context.Context, io.Writer, string) error
+	}
 )
 
 func NewStore(db *ent.Client, treeID int, r Reader) *Store {
@@ -31,6 +35,10 @@ func NewStore(db *ent.Client, treeID int, r Reader) *Store {
 		id:  treeID,
 		rdr: r,
 	}
+}
+
+func ReaderFunc(fn func(context.Context, io.Writer, string) error) Reader {
+	return &reader{fn: fn}
 }
 
 func (s *Store) Get(ctx context.Context, path, version string) (*goproxy.ModuleVersion, error) {
@@ -118,11 +126,14 @@ func (s *Store) ReadFile(ctx context.Context, w io.Writer, uri string) error {
 	return nil
 }
 
+func (r *reader) Read(ctx context.Context, w io.Writer, uri string) error {
+	return r.fn(ctx, w, uri)
+}
+
 func toModuleVersion(r *ent.SumDBRecord) *goproxy.ModuleVersion {
 	return &goproxy.ModuleVersion{
 		Path:      r.Path,
 		Version:   r.Version,
 		CreatedAt: r.CreatedAt,
-		// TODO: assets
 	}
 }

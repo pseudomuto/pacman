@@ -9,6 +9,18 @@ import (
 	"github.com/pseudomuto/pacman/internal/ent"
 )
 
+// The ArchiveFunc type is an adapter to allow the use of ordinary
+// function as Archive mutator.
+type ArchiveFunc func(context.Context, *ent.ArchiveMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f ArchiveFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.ArchiveMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ArchiveMutation", m)
+}
+
 // The ArtifactFunc type is an adapter to allow the use of ordinary
 // function as Artifact mutator.
 type ArtifactFunc func(context.Context, *ent.ArtifactMutation) (ent.Value, error)
