@@ -26,15 +26,29 @@ metricsAddr: ":9200"
 db:
   dialect: sqlite
   dsn: $DATABASE_URL
+storageBuckets:
+  - gs://some-gcp-bucket
+  - s3://some-aws-bucket
+  - file:///path/on/disk
 debug: true`)
 
 	cfg, err := Load(r, env)
 	require.NoError(t, err)
 
-	require.Equal(t, ":8080", cfg.Addr)
-	require.Equal(t, ":9200", cfg.MetricsAddr)
-	require.Equal(t, "sqlite://open_string", cfg.DB.DSN)
-	require.True(t, cfg.Debug)
+	require.Equal(t, &Config{
+		Addr:        ":8080",
+		MetricsAddr: ":9200",
+		Debug:       true,
+		DB: Database{
+			Dialect: "sqlite",
+			DSN:     "sqlite://open_string",
+		},
+		StorageBuckets: []string{
+			"gs://some-gcp-bucket",
+			"s3://some-aws-bucket",
+			"file:///path/on/disk",
+		},
+	}, cfg)
 }
 
 func TestLoadFile(t *testing.T) {
@@ -44,8 +58,7 @@ func TestLoadFile(t *testing.T) {
 	require.NoError(t, err)
 	t.Cleanup(func() { _ = f.Close() })
 
-	r := strings.NewReader("addr: :8080\nmetricsAddr: :9200")
-	_, err = io.Copy(f, r)
+	_, err = io.Copy(f, strings.NewReader("addr: :8080\nmetricsAddr: :9200"))
 	require.NoError(t, err)
 
 	cfg, err := LoadFile(path, func(s string) string {
