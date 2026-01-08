@@ -10,13 +10,7 @@ import (
 	"go.uber.org/fx"
 )
 
-type DSN struct {
-	Dialect          string
-	ConnectionString string
-}
-
 var Module = fx.Module("data", fx.Provide(
-	NewRepo,
 	func(c *config.Config) (*ent.Client, error) {
 		client, err := ent.Open(c.DB.Dialect, c.DB.DSN)
 		if err != nil {

@@ -9,12 +9,6 @@ import (
 // Archive is the predicate function for archive builders.
 type Archive func(*sql.Selector)
 
-// Artifact is the predicate function for artifact builders.
-type Artifact func(*sql.Selector)
-
-// ArtifactVersion is the predicate function for artifactversion builders.
-type ArtifactVersion func(*sql.Selector)
-
 // Asset is the predicate function for asset builders.
 type Asset func(*sql.Selector)
 

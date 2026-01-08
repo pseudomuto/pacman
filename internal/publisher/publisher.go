@@ -7,7 +7,6 @@ import (
 	"os"
 
 	"github.com/pseudomuto/pacman/internal/archive"
-	"github.com/pseudomuto/pacman/internal/ent"
 	"github.com/pseudomuto/pacman/internal/fsutil"
 	"github.com/pseudomuto/pacman/internal/types"
 	"go.uber.org/fx"
@@ -17,15 +16,13 @@ type (
 	PublisherParams struct {
 		fx.In
 
-		Packagers   []Packager `group:"publisher_packagers"`
-		Persister   Persister
+		Packagers   []Packager   `group:"publisher_packagers"`
 		Uploaders   []Uploader   `group:"publisher_uploaders"`
 		VCSFetchers []VCSFetcher `group:"publisher_vcs_fetchers"`
 	}
 
 	Publisher struct {
 		archivers []Packager
-		persister Persister
 		uploaders []Uploader
 		vcs       []VCSFetcher
 	}
@@ -40,10 +37,6 @@ type (
 		Package     string
 		Description string
 		Version     string
-	}
-
-	Persister interface {
-		CreateArtifact(context.Context, *ent.Artifact) (*ent.Artifact, error)
 	}
 
 	Packager interface {
@@ -65,7 +58,6 @@ type (
 func New(p PublisherParams) *Publisher {
 	return &Publisher{
 		archivers: p.Packagers,
-		persister: p.Persister,
 		uploaders: p.Uploaders,
 		vcs:       p.VCSFetchers,
 	}
@@ -78,11 +70,6 @@ func (p *Publisher) Publish(ctx context.Context, opts PublishOptions) error {
 	}
 
 	fetcher, err := p.fetcher(opts.VCS)
-	if err != nil {
-		return err
-	}
-
-	uploader, err := p.uploader(opts.Storage)
 	if err != nil {
 		return err
 	}
@@ -118,35 +105,6 @@ func (p *Publisher) Publish(ctx context.Context, opts PublishOptions) error {
 
 				if _, err := pkg.Seek(0, 0); err != nil {
 					return fmt.Errorf("failed to seek to beginning of package: %w", err)
-				}
-
-				// Upload package
-				path := fmt.Sprintf(
-					"%s/%s@%s.zip",
-					opts.Type,
-					opts.Package,
-					opts.Version,
-				)
-
-				uri, err := uploader.Write(ctx, pkg, path)
-				if err != nil {
-					return fmt.Errorf("failed to upload package: %w", err)
-				}
-
-				if _, err := p.persister.CreateArtifact(ctx, &ent.Artifact{
-					Name:        opts.Package,
-					Description: opts.Description,
-					Type:        opts.Type,
-					Edges: ent.ArtifactEdges{
-						Versions: []*ent.ArtifactVersion{
-							{
-								Version: opts.Version,
-								URI:     uri,
-							},
-						},
-					},
-				}); err != nil {
-					return fmt.Errorf("failed to persist artifact: %w", err)
 				}
 
 				return nil
@@ -185,14 +143,4 @@ func (p *Publisher) fetcher(t types.VCSType) (VCSFetcher, error) {
 	}
 
 	return nil, fmt.Errorf("unknown fetcher: %d", t)
-}
-
-func (p *Publisher) uploader(t types.StorageType) (Uploader, error) {
-	for _, up := range p.uploaders {
-		if up.Type() == t {
-			return up, nil
-		}
-	}
-
-	return nil, fmt.Errorf("unknown uploader: %d", t)
 }

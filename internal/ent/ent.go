@@ -13,8 +13,6 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/pseudomuto/pacman/internal/ent/archive"
-	"github.com/pseudomuto/pacman/internal/ent/artifact"
-	"github.com/pseudomuto/pacman/internal/ent/artifactversion"
 	"github.com/pseudomuto/pacman/internal/ent/asset"
 	"github.com/pseudomuto/pacman/internal/ent/sumdbhash"
 	"github.com/pseudomuto/pacman/internal/ent/sumdbrecord"
@@ -79,13 +77,11 @@ var (
 func checkColumn(t, c string) error {
 	initCheck.Do(func() {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
-			archive.Table:         archive.ValidColumn,
-			artifact.Table:        artifact.ValidColumn,
-			artifactversion.Table: artifactversion.ValidColumn,
-			asset.Table:           asset.ValidColumn,
-			sumdbhash.Table:       sumdbhash.ValidColumn,
-			sumdbrecord.Table:     sumdbrecord.ValidColumn,
-			sumdbtree.Table:       sumdbtree.ValidColumn,
+			archive.Table:     archive.ValidColumn,
+			asset.Table:       asset.ValidColumn,
+			sumdbhash.Table:   sumdbhash.ValidColumn,
+			sumdbrecord.Table: sumdbrecord.ValidColumn,
+			sumdbtree.Table:   sumdbtree.ValidColumn,
 		})
 	})
 	return columnCheck(t, c)

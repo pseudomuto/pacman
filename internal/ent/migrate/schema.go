@@ -45,73 +45,6 @@ var (
 			},
 		},
 	}
-	// ArtifactsColumns holds the columns for the "artifacts" table.
-	ArtifactsColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "created_at", Type: field.TypeTime},
-		{Name: "updated_at", Type: field.TypeTime},
-		{Name: "name", Type: field.TypeString, Unique: true, Size: 300},
-		{Name: "description", Type: field.TypeString, Size: 2147483647},
-		{Name: "type", Type: field.TypeEnum, Enums: []string{"gomod"}},
-	}
-	// ArtifactsTable holds the schema information for the "artifacts" table.
-	ArtifactsTable = &schema.Table{
-		Name:       "artifacts",
-		Columns:    ArtifactsColumns,
-		PrimaryKey: []*schema.Column{ArtifactsColumns[0]},
-		Indexes: []*schema.Index{
-			{
-				Name:    "artifact_created_at",
-				Unique:  false,
-				Columns: []*schema.Column{ArtifactsColumns[1]},
-			},
-			{
-				Name:    "artifact_updated_at",
-				Unique:  false,
-				Columns: []*schema.Column{ArtifactsColumns[2]},
-			},
-		},
-	}
-	// ArtifactVersionsColumns holds the columns for the "artifact_versions" table.
-	ArtifactVersionsColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "created_at", Type: field.TypeTime},
-		{Name: "updated_at", Type: field.TypeTime},
-		{Name: "version", Type: field.TypeString, Size: 50},
-		{Name: "uri", Type: field.TypeString, Size: 1000},
-		{Name: "artifact_id", Type: field.TypeInt},
-	}
-	// ArtifactVersionsTable holds the schema information for the "artifact_versions" table.
-	ArtifactVersionsTable = &schema.Table{
-		Name:       "artifact_versions",
-		Columns:    ArtifactVersionsColumns,
-		PrimaryKey: []*schema.Column{ArtifactVersionsColumns[0]},
-		ForeignKeys: []*schema.ForeignKey{
-			{
-				Symbol:     "artifact_versions_artifacts_versions",
-				Columns:    []*schema.Column{ArtifactVersionsColumns[5]},
-				RefColumns: []*schema.Column{ArtifactsColumns[0]},
-				OnDelete:   schema.NoAction,
-			},
-		},
-		Indexes: []*schema.Index{
-			{
-				Name:    "artifactversion_created_at",
-				Unique:  false,
-				Columns: []*schema.Column{ArtifactVersionsColumns[1]},
-			},
-			{
-				Name:    "artifactversion_updated_at",
-				Unique:  false,
-				Columns: []*schema.Column{ArtifactVersionsColumns[2]},
-			},
-			{
-				Name:    "artifactversion_version_artifact_id",
-				Unique:  true,
-				Columns: []*schema.Column{ArtifactVersionsColumns[3], ArtifactVersionsColumns[5]},
-			},
-		},
-	}
 	// AssetsColumns holds the columns for the "assets" table.
 	AssetsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
@@ -291,8 +224,6 @@ var (
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
 		ArchivesTable,
-		ArtifactsTable,
-		ArtifactVersionsTable,
 		AssetsTable,
 		SumDbHashesTable,
 		SumDbRecordsTable,
@@ -302,7 +233,6 @@ var (
 )
 
 func init() {
-	ArtifactVersionsTable.ForeignKeys[0].RefTable = ArtifactsTable
 	SumDbHashesTable.ForeignKeys[0].RefTable = SumDbTreesTable
 	SumDbRecordsTable.ForeignKeys[0].RefTable = SumDbTreesTable
 	SumDbRecordAssetsTable.ForeignKeys[0].RefTable = SumDbRecordsTable
