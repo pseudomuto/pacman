@@ -6,8 +6,6 @@ import (
 	"time"
 
 	"github.com/pseudomuto/pacman/internal/ent/archive"
-	"github.com/pseudomuto/pacman/internal/ent/artifact"
-	"github.com/pseudomuto/pacman/internal/ent/artifactversion"
 	"github.com/pseudomuto/pacman/internal/ent/asset"
 	"github.com/pseudomuto/pacman/internal/ent/schema"
 	"github.com/pseudomuto/pacman/internal/ent/sumdbhash"
@@ -38,48 +36,6 @@ func init() {
 	archiveDescCoordinate := archiveFields[1].Descriptor()
 	// archive.CoordinateValidator is a validator for the "coordinate" field. It is called by the builders before save.
 	archive.CoordinateValidator = archiveDescCoordinate.Validators[0].(func(string) error)
-	artifactMixin := schema.Artifact{}.Mixin()
-	artifactMixinFields0 := artifactMixin[0].Fields()
-	_ = artifactMixinFields0
-	artifactFields := schema.Artifact{}.Fields()
-	_ = artifactFields
-	// artifactDescCreatedAt is the schema descriptor for created_at field.
-	artifactDescCreatedAt := artifactMixinFields0[0].Descriptor()
-	// artifact.DefaultCreatedAt holds the default value on creation for the created_at field.
-	artifact.DefaultCreatedAt = artifactDescCreatedAt.Default.(func() time.Time)
-	// artifactDescUpdatedAt is the schema descriptor for updated_at field.
-	artifactDescUpdatedAt := artifactMixinFields0[1].Descriptor()
-	// artifact.DefaultUpdatedAt holds the default value on creation for the updated_at field.
-	artifact.DefaultUpdatedAt = artifactDescUpdatedAt.Default.(func() time.Time)
-	// artifact.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
-	artifact.UpdateDefaultUpdatedAt = artifactDescUpdatedAt.UpdateDefault.(func() time.Time)
-	// artifactDescName is the schema descriptor for name field.
-	artifactDescName := artifactFields[0].Descriptor()
-	// artifact.NameValidator is a validator for the "name" field. It is called by the builders before save.
-	artifact.NameValidator = artifactDescName.Validators[0].(func(string) error)
-	artifactversionMixin := schema.ArtifactVersion{}.Mixin()
-	artifactversionMixinFields0 := artifactversionMixin[0].Fields()
-	_ = artifactversionMixinFields0
-	artifactversionFields := schema.ArtifactVersion{}.Fields()
-	_ = artifactversionFields
-	// artifactversionDescCreatedAt is the schema descriptor for created_at field.
-	artifactversionDescCreatedAt := artifactversionMixinFields0[0].Descriptor()
-	// artifactversion.DefaultCreatedAt holds the default value on creation for the created_at field.
-	artifactversion.DefaultCreatedAt = artifactversionDescCreatedAt.Default.(func() time.Time)
-	// artifactversionDescUpdatedAt is the schema descriptor for updated_at field.
-	artifactversionDescUpdatedAt := artifactversionMixinFields0[1].Descriptor()
-	// artifactversion.DefaultUpdatedAt holds the default value on creation for the updated_at field.
-	artifactversion.DefaultUpdatedAt = artifactversionDescUpdatedAt.Default.(func() time.Time)
-	// artifactversion.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
-	artifactversion.UpdateDefaultUpdatedAt = artifactversionDescUpdatedAt.UpdateDefault.(func() time.Time)
-	// artifactversionDescVersion is the schema descriptor for version field.
-	artifactversionDescVersion := artifactversionFields[0].Descriptor()
-	// artifactversion.VersionValidator is a validator for the "version" field. It is called by the builders before save.
-	artifactversion.VersionValidator = artifactversionDescVersion.Validators[0].(func(string) error)
-	// artifactversionDescURI is the schema descriptor for uri field.
-	artifactversionDescURI := artifactversionFields[1].Descriptor()
-	// artifactversion.URIValidator is a validator for the "uri" field. It is called by the builders before save.
-	artifactversion.URIValidator = artifactversionDescURI.Validators[0].(func(string) error)
 	assetMixin := schema.Asset{}.Mixin()
 	assetMixinFields0 := assetMixin[0].Fields()
 	_ = assetMixinFields0

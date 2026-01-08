@@ -21,30 +21,6 @@ func (f ArchiveFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, err
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ArchiveMutation", m)
 }
 
-// The ArtifactFunc type is an adapter to allow the use of ordinary
-// function as Artifact mutator.
-type ArtifactFunc func(context.Context, *ent.ArtifactMutation) (ent.Value, error)
-
-// Mutate calls f(ctx, m).
-func (f ArtifactFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
-	if mv, ok := m.(*ent.ArtifactMutation); ok {
-		return f(ctx, mv)
-	}
-	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ArtifactMutation", m)
-}
-
-// The ArtifactVersionFunc type is an adapter to allow the use of ordinary
-// function as ArtifactVersion mutator.
-type ArtifactVersionFunc func(context.Context, *ent.ArtifactVersionMutation) (ent.Value, error)
-
-// Mutate calls f(ctx, m).
-func (f ArtifactVersionFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
-	if mv, ok := m.(*ent.ArtifactVersionMutation); ok {
-		return f(ctx, mv)
-	}
-	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ArtifactVersionMutation", m)
-}
-
 // The AssetFunc type is an adapter to allow the use of ordinary
 // function as Asset mutator.
 type AssetFunc func(context.Context, *ent.AssetMutation) (ent.Value, error)

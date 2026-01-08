@@ -16,8 +16,6 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/pseudomuto/pacman/internal/ent/archive"
-	"github.com/pseudomuto/pacman/internal/ent/artifact"
-	"github.com/pseudomuto/pacman/internal/ent/artifactversion"
 	"github.com/pseudomuto/pacman/internal/ent/asset"
 	"github.com/pseudomuto/pacman/internal/ent/sumdbhash"
 	"github.com/pseudomuto/pacman/internal/ent/sumdbrecord"
@@ -31,10 +29,6 @@ type Client struct {
 	Schema *migrate.Schema
 	// Archive is the client for interacting with the Archive builders.
 	Archive *ArchiveClient
-	// Artifact is the client for interacting with the Artifact builders.
-	Artifact *ArtifactClient
-	// ArtifactVersion is the client for interacting with the ArtifactVersion builders.
-	ArtifactVersion *ArtifactVersionClient
 	// Asset is the client for interacting with the Asset builders.
 	Asset *AssetClient
 	// SumDBHash is the client for interacting with the SumDBHash builders.
@@ -55,8 +49,6 @@ func NewClient(opts ...Option) *Client {
 func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
 	c.Archive = NewArchiveClient(c.config)
-	c.Artifact = NewArtifactClient(c.config)
-	c.ArtifactVersion = NewArtifactVersionClient(c.config)
 	c.Asset = NewAssetClient(c.config)
 	c.SumDBHash = NewSumDBHashClient(c.config)
 	c.SumDBRecord = NewSumDBRecordClient(c.config)
@@ -151,15 +143,13 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	cfg := c.config
 	cfg.driver = tx
 	return &Tx{
-		ctx:             ctx,
-		config:          cfg,
-		Archive:         NewArchiveClient(cfg),
-		Artifact:        NewArtifactClient(cfg),
-		ArtifactVersion: NewArtifactVersionClient(cfg),
-		Asset:           NewAssetClient(cfg),
-		SumDBHash:       NewSumDBHashClient(cfg),
-		SumDBRecord:     NewSumDBRecordClient(cfg),
-		SumDBTree:       NewSumDBTreeClient(cfg),
+		ctx:         ctx,
+		config:      cfg,
+		Archive:     NewArchiveClient(cfg),
+		Asset:       NewAssetClient(cfg),
+		SumDBHash:   NewSumDBHashClient(cfg),
+		SumDBRecord: NewSumDBRecordClient(cfg),
+		SumDBTree:   NewSumDBTreeClient(cfg),
 	}, nil
 }
 
@@ -177,15 +167,13 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	cfg := c.config
 	cfg.driver = &txDriver{tx: tx, drv: c.driver}
 	return &Tx{
-		ctx:             ctx,
-		config:          cfg,
-		Archive:         NewArchiveClient(cfg),
-		Artifact:        NewArtifactClient(cfg),
-		ArtifactVersion: NewArtifactVersionClient(cfg),
-		Asset:           NewAssetClient(cfg),
-		SumDBHash:       NewSumDBHashClient(cfg),
-		SumDBRecord:     NewSumDBRecordClient(cfg),
-		SumDBTree:       NewSumDBTreeClient(cfg),
+		ctx:         ctx,
+		config:      cfg,
+		Archive:     NewArchiveClient(cfg),
+		Asset:       NewAssetClient(cfg),
+		SumDBHash:   NewSumDBHashClient(cfg),
+		SumDBRecord: NewSumDBRecordClient(cfg),
+		SumDBTree:   NewSumDBTreeClient(cfg),
 	}, nil
 }
 
@@ -214,23 +202,21 @@ func (c *Client) Close() error {
 // Use adds the mutation hooks to all the entity clients.
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
-	for _, n := range []interface{ Use(...Hook) }{
-		c.Archive, c.Artifact, c.ArtifactVersion, c.Asset, c.SumDBHash, c.SumDBRecord,
-		c.SumDBTree,
-	} {
-		n.Use(hooks...)
-	}
+	c.Archive.Use(hooks...)
+	c.Asset.Use(hooks...)
+	c.SumDBHash.Use(hooks...)
+	c.SumDBRecord.Use(hooks...)
+	c.SumDBTree.Use(hooks...)
 }
 
 // Intercept adds the query interceptors to all the entity clients.
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
-	for _, n := range []interface{ Intercept(...Interceptor) }{
-		c.Archive, c.Artifact, c.ArtifactVersion, c.Asset, c.SumDBHash, c.SumDBRecord,
-		c.SumDBTree,
-	} {
-		n.Intercept(interceptors...)
-	}
+	c.Archive.Intercept(interceptors...)
+	c.Asset.Intercept(interceptors...)
+	c.SumDBHash.Intercept(interceptors...)
+	c.SumDBRecord.Intercept(interceptors...)
+	c.SumDBTree.Intercept(interceptors...)
 }
 
 // Mutate implements the ent.Mutator interface.
@@ -238,10 +224,6 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 	switch m := m.(type) {
 	case *ArchiveMutation:
 		return c.Archive.mutate(ctx, m)
-	case *ArtifactMutation:
-		return c.Artifact.mutate(ctx, m)
-	case *ArtifactVersionMutation:
-		return c.ArtifactVersion.mutate(ctx, m)
 	case *AssetMutation:
 		return c.Asset.mutate(ctx, m)
 	case *SumDBHashMutation:
@@ -385,304 +367,6 @@ func (c *ArchiveClient) mutate(ctx context.Context, m *ArchiveMutation) (Value, 
 		return (&ArchiveDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown Archive mutation op: %q", m.Op())
-	}
-}
-
-// ArtifactClient is a client for the Artifact schema.
-type ArtifactClient struct {
-	config
-}
-
-// NewArtifactClient returns a client for the Artifact from the given config.
-func NewArtifactClient(c config) *ArtifactClient {
-	return &ArtifactClient{config: c}
-}
-
-// Use adds a list of mutation hooks to the hooks stack.
-// A call to `Use(f, g, h)` equals to `artifact.Hooks(f(g(h())))`.
-func (c *ArtifactClient) Use(hooks ...Hook) {
-	c.hooks.Artifact = append(c.hooks.Artifact, hooks...)
-}
-
-// Intercept adds a list of query interceptors to the interceptors stack.
-// A call to `Intercept(f, g, h)` equals to `artifact.Intercept(f(g(h())))`.
-func (c *ArtifactClient) Intercept(interceptors ...Interceptor) {
-	c.inters.Artifact = append(c.inters.Artifact, interceptors...)
-}
-
-// Create returns a builder for creating a Artifact entity.
-func (c *ArtifactClient) Create() *ArtifactCreate {
-	mutation := newArtifactMutation(c.config, OpCreate)
-	return &ArtifactCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// CreateBulk returns a builder for creating a bulk of Artifact entities.
-func (c *ArtifactClient) CreateBulk(builders ...*ArtifactCreate) *ArtifactCreateBulk {
-	return &ArtifactCreateBulk{config: c.config, builders: builders}
-}
-
-// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
-// a builder and applies setFunc on it.
-func (c *ArtifactClient) MapCreateBulk(slice any, setFunc func(*ArtifactCreate, int)) *ArtifactCreateBulk {
-	rv := reflect.ValueOf(slice)
-	if rv.Kind() != reflect.Slice {
-		return &ArtifactCreateBulk{err: fmt.Errorf("calling to ArtifactClient.MapCreateBulk with wrong type %T, need slice", slice)}
-	}
-	builders := make([]*ArtifactCreate, rv.Len())
-	for i := 0; i < rv.Len(); i++ {
-		builders[i] = c.Create()
-		setFunc(builders[i], i)
-	}
-	return &ArtifactCreateBulk{config: c.config, builders: builders}
-}
-
-// Update returns an update builder for Artifact.
-func (c *ArtifactClient) Update() *ArtifactUpdate {
-	mutation := newArtifactMutation(c.config, OpUpdate)
-	return &ArtifactUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// UpdateOne returns an update builder for the given entity.
-func (c *ArtifactClient) UpdateOne(_m *Artifact) *ArtifactUpdateOne {
-	mutation := newArtifactMutation(c.config, OpUpdateOne, withArtifact(_m))
-	return &ArtifactUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// UpdateOneID returns an update builder for the given id.
-func (c *ArtifactClient) UpdateOneID(id int) *ArtifactUpdateOne {
-	mutation := newArtifactMutation(c.config, OpUpdateOne, withArtifactID(id))
-	return &ArtifactUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// Delete returns a delete builder for Artifact.
-func (c *ArtifactClient) Delete() *ArtifactDelete {
-	mutation := newArtifactMutation(c.config, OpDelete)
-	return &ArtifactDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// DeleteOne returns a builder for deleting the given entity.
-func (c *ArtifactClient) DeleteOne(_m *Artifact) *ArtifactDeleteOne {
-	return c.DeleteOneID(_m.ID)
-}
-
-// DeleteOneID returns a builder for deleting the given entity by its id.
-func (c *ArtifactClient) DeleteOneID(id int) *ArtifactDeleteOne {
-	builder := c.Delete().Where(artifact.ID(id))
-	builder.mutation.id = &id
-	builder.mutation.op = OpDeleteOne
-	return &ArtifactDeleteOne{builder}
-}
-
-// Query returns a query builder for Artifact.
-func (c *ArtifactClient) Query() *ArtifactQuery {
-	return &ArtifactQuery{
-		config: c.config,
-		ctx:    &QueryContext{Type: TypeArtifact},
-		inters: c.Interceptors(),
-	}
-}
-
-// Get returns a Artifact entity by its id.
-func (c *ArtifactClient) Get(ctx context.Context, id int) (*Artifact, error) {
-	return c.Query().Where(artifact.ID(id)).Only(ctx)
-}
-
-// GetX is like Get, but panics if an error occurs.
-func (c *ArtifactClient) GetX(ctx context.Context, id int) *Artifact {
-	obj, err := c.Get(ctx, id)
-	if err != nil {
-		panic(err)
-	}
-	return obj
-}
-
-// QueryVersions queries the versions edge of a Artifact.
-func (c *ArtifactClient) QueryVersions(_m *Artifact) *ArtifactVersionQuery {
-	query := (&ArtifactVersionClient{config: c.config}).Query()
-	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := _m.ID
-		step := sqlgraph.NewStep(
-			sqlgraph.From(artifact.Table, artifact.FieldID, id),
-			sqlgraph.To(artifactversion.Table, artifactversion.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, artifact.VersionsTable, artifact.VersionsColumn),
-		)
-		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
-		return fromV, nil
-	}
-	return query
-}
-
-// Hooks returns the client hooks.
-func (c *ArtifactClient) Hooks() []Hook {
-	return c.hooks.Artifact
-}
-
-// Interceptors returns the client interceptors.
-func (c *ArtifactClient) Interceptors() []Interceptor {
-	return c.inters.Artifact
-}
-
-func (c *ArtifactClient) mutate(ctx context.Context, m *ArtifactMutation) (Value, error) {
-	switch m.Op() {
-	case OpCreate:
-		return (&ArtifactCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
-	case OpUpdate:
-		return (&ArtifactUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
-	case OpUpdateOne:
-		return (&ArtifactUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
-	case OpDelete, OpDeleteOne:
-		return (&ArtifactDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
-	default:
-		return nil, fmt.Errorf("ent: unknown Artifact mutation op: %q", m.Op())
-	}
-}
-
-// ArtifactVersionClient is a client for the ArtifactVersion schema.
-type ArtifactVersionClient struct {
-	config
-}
-
-// NewArtifactVersionClient returns a client for the ArtifactVersion from the given config.
-func NewArtifactVersionClient(c config) *ArtifactVersionClient {
-	return &ArtifactVersionClient{config: c}
-}
-
-// Use adds a list of mutation hooks to the hooks stack.
-// A call to `Use(f, g, h)` equals to `artifactversion.Hooks(f(g(h())))`.
-func (c *ArtifactVersionClient) Use(hooks ...Hook) {
-	c.hooks.ArtifactVersion = append(c.hooks.ArtifactVersion, hooks...)
-}
-
-// Intercept adds a list of query interceptors to the interceptors stack.
-// A call to `Intercept(f, g, h)` equals to `artifactversion.Intercept(f(g(h())))`.
-func (c *ArtifactVersionClient) Intercept(interceptors ...Interceptor) {
-	c.inters.ArtifactVersion = append(c.inters.ArtifactVersion, interceptors...)
-}
-
-// Create returns a builder for creating a ArtifactVersion entity.
-func (c *ArtifactVersionClient) Create() *ArtifactVersionCreate {
-	mutation := newArtifactVersionMutation(c.config, OpCreate)
-	return &ArtifactVersionCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// CreateBulk returns a builder for creating a bulk of ArtifactVersion entities.
-func (c *ArtifactVersionClient) CreateBulk(builders ...*ArtifactVersionCreate) *ArtifactVersionCreateBulk {
-	return &ArtifactVersionCreateBulk{config: c.config, builders: builders}
-}
-
-// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
-// a builder and applies setFunc on it.
-func (c *ArtifactVersionClient) MapCreateBulk(slice any, setFunc func(*ArtifactVersionCreate, int)) *ArtifactVersionCreateBulk {
-	rv := reflect.ValueOf(slice)
-	if rv.Kind() != reflect.Slice {
-		return &ArtifactVersionCreateBulk{err: fmt.Errorf("calling to ArtifactVersionClient.MapCreateBulk with wrong type %T, need slice", slice)}
-	}
-	builders := make([]*ArtifactVersionCreate, rv.Len())
-	for i := 0; i < rv.Len(); i++ {
-		builders[i] = c.Create()
-		setFunc(builders[i], i)
-	}
-	return &ArtifactVersionCreateBulk{config: c.config, builders: builders}
-}
-
-// Update returns an update builder for ArtifactVersion.
-func (c *ArtifactVersionClient) Update() *ArtifactVersionUpdate {
-	mutation := newArtifactVersionMutation(c.config, OpUpdate)
-	return &ArtifactVersionUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// UpdateOne returns an update builder for the given entity.
-func (c *ArtifactVersionClient) UpdateOne(_m *ArtifactVersion) *ArtifactVersionUpdateOne {
-	mutation := newArtifactVersionMutation(c.config, OpUpdateOne, withArtifactVersion(_m))
-	return &ArtifactVersionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// UpdateOneID returns an update builder for the given id.
-func (c *ArtifactVersionClient) UpdateOneID(id int) *ArtifactVersionUpdateOne {
-	mutation := newArtifactVersionMutation(c.config, OpUpdateOne, withArtifactVersionID(id))
-	return &ArtifactVersionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// Delete returns a delete builder for ArtifactVersion.
-func (c *ArtifactVersionClient) Delete() *ArtifactVersionDelete {
-	mutation := newArtifactVersionMutation(c.config, OpDelete)
-	return &ArtifactVersionDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// DeleteOne returns a builder for deleting the given entity.
-func (c *ArtifactVersionClient) DeleteOne(_m *ArtifactVersion) *ArtifactVersionDeleteOne {
-	return c.DeleteOneID(_m.ID)
-}
-
-// DeleteOneID returns a builder for deleting the given entity by its id.
-func (c *ArtifactVersionClient) DeleteOneID(id int) *ArtifactVersionDeleteOne {
-	builder := c.Delete().Where(artifactversion.ID(id))
-	builder.mutation.id = &id
-	builder.mutation.op = OpDeleteOne
-	return &ArtifactVersionDeleteOne{builder}
-}
-
-// Query returns a query builder for ArtifactVersion.
-func (c *ArtifactVersionClient) Query() *ArtifactVersionQuery {
-	return &ArtifactVersionQuery{
-		config: c.config,
-		ctx:    &QueryContext{Type: TypeArtifactVersion},
-		inters: c.Interceptors(),
-	}
-}
-
-// Get returns a ArtifactVersion entity by its id.
-func (c *ArtifactVersionClient) Get(ctx context.Context, id int) (*ArtifactVersion, error) {
-	return c.Query().Where(artifactversion.ID(id)).Only(ctx)
-}
-
-// GetX is like Get, but panics if an error occurs.
-func (c *ArtifactVersionClient) GetX(ctx context.Context, id int) *ArtifactVersion {
-	obj, err := c.Get(ctx, id)
-	if err != nil {
-		panic(err)
-	}
-	return obj
-}
-
-// QueryArtifact queries the artifact edge of a ArtifactVersion.
-func (c *ArtifactVersionClient) QueryArtifact(_m *ArtifactVersion) *ArtifactQuery {
-	query := (&ArtifactClient{config: c.config}).Query()
-	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := _m.ID
-		step := sqlgraph.NewStep(
-			sqlgraph.From(artifactversion.Table, artifactversion.FieldID, id),
-			sqlgraph.To(artifact.Table, artifact.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, artifactversion.ArtifactTable, artifactversion.ArtifactColumn),
-		)
-		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
-		return fromV, nil
-	}
-	return query
-}
-
-// Hooks returns the client hooks.
-func (c *ArtifactVersionClient) Hooks() []Hook {
-	return c.hooks.ArtifactVersion
-}
-
-// Interceptors returns the client interceptors.
-func (c *ArtifactVersionClient) Interceptors() []Interceptor {
-	return c.inters.ArtifactVersion
-}
-
-func (c *ArtifactVersionClient) mutate(ctx context.Context, m *ArtifactVersionMutation) (Value, error) {
-	switch m.Op() {
-	case OpCreate:
-		return (&ArtifactVersionCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
-	case OpUpdate:
-		return (&ArtifactVersionUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
-	case OpUpdateOne:
-		return (&ArtifactVersionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
-	case OpDelete, OpDeleteOne:
-		return (&ArtifactVersionDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
-	default:
-		return nil, fmt.Errorf("ent: unknown ArtifactVersion mutation op: %q", m.Op())
 	}
 }
 
@@ -1317,11 +1001,9 @@ func (c *SumDBTreeClient) mutate(ctx context.Context, m *SumDBTreeMutation) (Val
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		Archive, Artifact, ArtifactVersion, Asset, SumDBHash, SumDBRecord,
-		SumDBTree []ent.Hook
+		Archive, Asset, SumDBHash, SumDBRecord, SumDBTree []ent.Hook
 	}
 	inters struct {
-		Archive, Artifact, ArtifactVersion, Asset, SumDBHash, SumDBRecord,
-		SumDBTree []ent.Interceptor
+		Archive, Asset, SumDBHash, SumDBRecord, SumDBTree []ent.Interceptor
 	}
 )

@@ -1,13 +1,12 @@
 package publisher_test
 
-//go:generate go tool mockgen -destination=mocks_test.go -package=publisher_test . Packager,Persister,Uploader,VCSFetcher
+//go:generate go tool mockgen -destination=mocks_test.go -package=publisher_test . Packager,Uploader,VCSFetcher
 
 import (
 	"io"
 	"testing"
 
 	"github.com/pseudomuto/pacman/internal/archive"
-	"github.com/pseudomuto/pacman/internal/ent"
 	"github.com/pseudomuto/pacman/internal/packager"
 	. "github.com/pseudomuto/pacman/internal/publisher"
 	"github.com/pseudomuto/pacman/internal/types"
@@ -22,13 +21,11 @@ func TestPublisher_Publish(t *testing.T) {
 	defer ctrl.Finish()
 
 	fetcher := NewMockVCSFetcher(ctrl)
-	persister := NewMockPersister(ctrl)
 	uploader := NewMockUploader(ctrl)
 
 	t.Run("go module", func(t *testing.T) {
 		publisher := New(PublisherParams{
 			Packagers:   []Packager{packager.NewGoModule()},
-			Persister:   persister,
 			Uploaders:   []Uploader{uploader},
 			VCSFetchers: []VCSFetcher{fetcher},
 		})
@@ -46,7 +43,6 @@ func TestPublisher_Publish(t *testing.T) {
 		}
 
 		fetcher.EXPECT().Type().Return(pubOpts.VCS)
-		uploader.EXPECT().Type().Return(pubOpts.Storage)
 
 		fetcher.EXPECT().
 			FetchArchive(gomock.Any(), gomock.Any(), gomock.Any()).
@@ -69,26 +65,6 @@ func TestPublisher_Publish(t *testing.T) {
 					),
 				)
 			})
-
-		persister.EXPECT().CreateArtifact(gomock.Any(), &ent.Artifact{
-			Name:        pubOpts.Package,
-			Description: pubOpts.Description,
-			Type:        pubOpts.Type,
-			Edges: ent.ArtifactEdges{
-				Versions: []*ent.ArtifactVersion{
-					{
-						Version: pubOpts.Version,
-						URI:     "gs://test-bucket/gomod/github.com/pseudomuto/test@v1.2.3.zip",
-					},
-				},
-			},
-		})
-
-		uploader.EXPECT().Write(
-			gomock.Any(),
-			gomock.Any(),
-			"gomod/github.com/pseudomuto/test@v1.2.3.zip",
-		).Return("gs://test-bucket/gomod/github.com/pseudomuto/test@v1.2.3.zip", nil)
 
 		require.NoError(t, publisher.Publish(t.Context(), pubOpts))
 	})
@@ -116,18 +92,6 @@ func TestPublisher_Publish(t *testing.T) {
 				Type: types.GoModule,
 				VCS:  types.VCSType(100),
 			}), "unknown fetcher: 100")
-		})
-
-		t.Run("unknown uploader", func(t *testing.T) {
-			packager.EXPECT().Type().Return(types.GoModule)
-			fetcher.EXPECT().Type().Return(types.GitHub)
-			uploader.EXPECT().Type().Return(types.GCS)
-
-			require.EqualError(t, publisher.Publish(t.Context(), PublishOptions{
-				Type:    types.GoModule,
-				VCS:     types.GitHub,
-				Storage: types.StorageType(100),
-			}), "unknown uploader: 100")
 		})
 	})
 }
